@@ -2,7 +2,7 @@
 
 return [
 	'class' => 'yii\db\Connection',
-	'dsn' => 'mysql:host=localhost;port=3306;dbname=iranhmusic_yii',
+	'dsn' => 'mysql:host=localhost;port=3306;dbname=dbiranhmusic_yii',
 	'username' => 'root',
 	'password' => '111',
 
@@ -10,7 +10,7 @@ return [
 	'schemaCacheDuration' => 60, //3600; //seconds
 	'schemaCache' => 'cache',
 	'charset' => 'utf8mb4',
-	'tablePrefix' => 'tbl_',
+	'tablePrefix' => 'tbl',
 
 	// Schema cache options (for production environment)
 	//'enableSchemaCache' => true,

@@ -28,7 +28,7 @@ $config = [
 		'db' => $db,
 	],
 	'params' => $params,
-	'controllerMap' => [
+	/*'controllerMap' => [
 		// 'fixture' => [ // Fixture generation command line.
 		// 	'class' => 'yii\faker\FixtureController',
 		// ],
@@ -41,7 +41,7 @@ $config = [
 			// '@yii/../yii2-queue/src/drivers/db/migrations',
 		],
 		//'migrationPath' => null, // allows to disable not namespaced migration completely
-	],
+	],*/
 ];
 
 if (YII_ENV_DEV) {
