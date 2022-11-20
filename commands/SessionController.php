@@ -7,7 +7,7 @@ namespace app\commands;
 
 use yii\console\Controller;
 use yii\console\ExitCode;
-use app\models\SessionModel;
+use app\models\AAA\SessionModel;
 
 class SessionController extends Controller
 {

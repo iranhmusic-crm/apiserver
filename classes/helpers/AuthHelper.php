@@ -10,6 +10,7 @@ use app\classes\helpers\PrivHelper;
 use yii\web\UnauthorizedHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\UnprocessableEntityHttpException;
+use yii\helpers\ArrayHelper;
 use app\models\AAA\SessionModel;
 use app\models\AAA\RoleModel;
 
@@ -86,7 +87,7 @@ class AuthHelper
 
 		//token
 		//-----------------------
-		$ttl = Yii::$app->jwt->ttl;
+		$ttl = ArrayHelper::getValue(Yii::$app->params['settings']['AAA']['jwt']['ttl'], 5 * 60);
 
 		$now = new \DateTimeImmutable();
 		$expire = $now->modify("+{$ttl} second");

@@ -21,6 +21,9 @@ return [
       //   'age' => 0, //never expire
       //   'min-length' => 3,
       // ],
+      'jwt' => [
+        'ttl' => 5 * 60, //5 minutes
+      ],
     ],
   ],
 ];

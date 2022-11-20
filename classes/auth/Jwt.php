@@ -11,8 +11,6 @@ use Lcobucci\JWT\Builder;
 
 class Jwt extends BaseJwt
 {
-	public $ttl = 5 * 60; //secs
-
 	public function init(): void
 	{
 		parent::init();
