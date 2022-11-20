@@ -2,6 +2,7 @@
 
 $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
+$urlManager = require __DIR__ . '/urlManager.php';
 
 $config = [
 	'id' => 'basic',
@@ -24,11 +25,12 @@ $config = [
 			'charset' => 'UTF-8',
 		],
 		'cache' => [
-			'class' => 'yii\caching\FileCache',
+			'class' => \yii\caching\FileCache::class,
 		],
 		'user' => [
-			'identityClass' => 'app\models\User',
+			'class' => \app\classes\components\User::class,
 			'enableAutoLogin' => true,
+			'enableSession' => false,
 		],
 		'errorHandler' => [
 			'errorAction' => 'site/error',
@@ -49,26 +51,12 @@ $config = [
 			],
 		],
 		'db' => $db,
-		'urlManager' => [
-			'enablePrettyUrl' => true,
-			'enableStrictParsing' => true,
-			'showScriptName' => false,
-			'rules' => [
-				[
-					'class' => 'yii\rest\UrlRule',
-					'controller' => ['user'],
-					'pluralize' => false,
-					'extraPatterns' => [
-						'POST login' => 'login',
-					],
-				],
-			],
-		],
+		'urlManager' => $urlManager,
 		'jwt' => [
-			'class' => \bizley\jwt\Jwt::class,
+			'class' => \app\classes\auth\Jwt::class,
 			'signer' => \bizley\jwt\Jwt::HS512,
 			'signingKey' => 'fDcXlBvkO9ND9UvhszmW4elXl2EehtpM',
-			'ttl' => 100000, //secs
+			'ttl' => 24 * 3600, //24 hours
 		],
 	],
 	'params' => $params,

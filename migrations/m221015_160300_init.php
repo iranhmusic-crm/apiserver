@@ -1,4 +1,7 @@
 <?php
+/**
+ * @author Kambiz Zandi <kambizzandi@gmail.com>
+ */
 
 use yii\db\Migration;
 use yii\db\Expression;
@@ -7,6 +10,24 @@ class m221015_160300_init extends Migration
 {
 	public function up()
 	{
+		$this->execute(<<<SQLSTR
+CREATE TABLE `tblRole` (
+  `rolID` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `rolName` VARCHAR(64) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+  `rolParentID` INT(10) UNSIGNED NULL DEFAULT NULL,
+  `rolPrivs` JSON NOT NULL,
+  `rolCreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `rolCreatedBy` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
+  `rolUpdatedAt` DATETIME NULL DEFAULT NULL,
+  `rolUpdatedBy` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
+  PRIMARY KEY (`rolID`) USING BTREE
+)
+COLLATE='utf8mb4_unicode_ci'
+ENGINE=InnoDB
+;
+SQLSTR
+		);
+
 		$this->execute(<<<SQLSTR
 CREATE TABLE `tblGeoCountry` (
   `cntrID` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -69,96 +90,124 @@ ENGINE=InnoDB
 SQLSTR
     );
 
-		$this->execute(<<<SQLSTR
+    $this->execute(<<<SQLSTR
 CREATE TABLE `tblUser` (
   `usrID` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `usrEmail` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+  `usrRoleID` INT(10) UNSIGNED NULL DEFAULT NULL,
+  `usrPrivs` JSON NULL DEFAULT NULL,
+  `usrEmail` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
   `usrEmailApprovedAt` TIMESTAMP NULL DEFAULT NULL,
   `usrConfirmEmailToken` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
   `usrMobile` VARCHAR(32) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
   `usrMobileConfirmToken` MEDIUMINT(7) NULL DEFAULT NULL,
   `usrMobileApprovedAt` TIMESTAMP NULL DEFAULT NULL,
   `usrSSID` VARCHAR(16) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `usrAuthKey` VARCHAR(32) NOT NULL COLLATE 'utf8mb4_unicode_ci',
   `usrPasswordHash` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
   `usrPasswordResetToken` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+  `usrGender` CHAR(1) NULL DEFAULT NULL COMMENT 'M:Male, F:Female' COLLATE 'utf8mb4_unicode_ci',
+  `usrFirstName` VARCHAR(128) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+  `usrLastName` VARCHAR(128) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+  `usrCountryID` SMALLINT(5) UNSIGNED NULL DEFAULT NULL,
+  `usrStateID` MEDIUMINT(7) UNSIGNED NULL DEFAULT NULL,
+  `usrCityOrVillageID` MEDIUMINT(7) UNSIGNED NULL DEFAULT NULL,
+  `usrTownID` MEDIUMINT(7) UNSIGNED NULL DEFAULT NULL,
+  `usrBirthDate` DATE NULL DEFAULT NULL,
+  `usrHomeAddress` VARCHAR(2048) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+  `usrZipCode` VARCHAR(32) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+  `usrImage` VARCHAR(128) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+  `usrSignupCoordinates` VARCHAR(64) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
   `usrStatus` CHAR(1) NOT NULL DEFAULT 'A' COMMENT 'A:Active, D:Disable, R:Removed' COLLATE 'utf8mb4_unicode_ci',
   `usrCreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `usrCreatedBy` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
   `usrUpdatedAt` DATETIME NULL DEFAULT NULL,
   `usrUpdatedBy` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
-
+  `usrRemovedAt` INT(10) UNSIGNED NOT NULL DEFAULT '0',
+  `usrRemovedBy` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
   PRIMARY KEY (`usrID`) USING BTREE,
-  UNIQUE INDEX `usrEmail` (`usrEmail`) USING BTREE,
-  UNIQUE INDEX `usrMobile` (`usrMobile`) USING BTREE,
-  UNIQUE INDEX `usrSSID` (`usrSSID`) USING BTREE,
   UNIQUE INDEX `password_reset_token` (`usrPasswordResetToken`) USING BTREE,
   UNIQUE INDEX `usrConfirmEmailToken` (`usrConfirmEmailToken`) USING BTREE,
+  UNIQUE INDEX `usrEmail_usrRemovedAt` (`usrEmail`, `usrRemovedAt`) USING BTREE,
+  UNIQUE INDEX `usrMobile_usrRemovedAt` (`usrMobile`, `usrRemovedAt`) USING BTREE,
+  UNIQUE INDEX `usrSSID_usrRemovedAt` (`usrSSID`, `usrRemovedAt`) USING BTREE,
   INDEX `FK_tblUser_tblUser_creator` (`usrCreatedBy`) USING BTREE,
   INDEX `FK_tblUser_tblUser_modifier` (`usrUpdatedBy`) USING BTREE,
+  INDEX `FK_tblUser_tblRole` (`usrRoleID`) USING BTREE,
+  INDEX `FK_tblUser_tblGeoCountry` (`usrCountryID`) USING BTREE,
+  INDEX `FK_tblUser_tblGeoState` (`usrStateID`) USING BTREE,
+  INDEX `FK_tblUser_tblGeoCityOrVillage` (`usrCityOrVillageID`) USING BTREE,
+  INDEX `FK_tblUser_tblGeoTown` (`usrTownID`) USING BTREE,
+  CONSTRAINT `FK_tblUser_tblGeoCityOrVillage` FOREIGN KEY (`usrCityOrVillageID`) REFERENCES `tblGeoCityOrVillage` (`ctvID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT `FK_tblUser_tblGeoCountry` FOREIGN KEY (`usrCountryID`) REFERENCES `tblGeoCountry` (`cntrID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT `FK_tblUser_tblGeoState` FOREIGN KEY (`usrStateID`) REFERENCES `tblGeoState` (`sttID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT `FK_tblUser_tblGeoTown` FOREIGN KEY (`usrTownID`) REFERENCES `tblGeoTown` (`twnID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT `FK_tblUser_tblRole` FOREIGN KEY (`usrRoleID`) REFERENCES `tblRole` (`rolID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
   CONSTRAINT `FK_tblUser_tblUser_creator` FOREIGN KEY (`usrCreatedBy`) REFERENCES `tblUser` (`usrID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
   CONSTRAINT `FK_tblUser_tblUser_modifier` FOREIGN KEY (`usrUpdatedBy`) REFERENCES `tblUser` (`usrID`) ON UPDATE NO ACTION ON DELETE NO ACTION
 )
 COLLATE='utf8mb4_unicode_ci'
-DEFAULT CHARSET=utf8mb4
 ENGINE=InnoDB
 ;
 SQLSTR
 		);
 
 		$this->execute(<<<SQLSTR
-CREATE TABLE `tblProfile` (
-  `prf_usrID` BIGINT(20) UNSIGNED NOT NULL,
-  `prfGender` CHAR(1) NULL DEFAULT NULL COMMENT 'M:Male, F:Female' COLLATE 'utf8mb4_unicode_ci',
-  `prfFirstName` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-  `prfLastName` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-  `prfCountryID` SMALLINT(5) UNSIGNED NULL DEFAULT NULL,
-  `prfStateID` MEDIUMINT(7) UNSIGNED NULL DEFAULT NULL,
-  `prfCityOrVillageID` MEDIUMINT(7) UNSIGNED NULL DEFAULT NULL,
-  `prfTownID` MEDIUMINT(7) UNSIGNED NULL DEFAULT NULL,
-  `prfBirthDate` DATE NULL DEFAULT NULL,
-  `prfHomeAddress` VARCHAR(2048) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `prfZipCode` VARCHAR(32) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `prfMilitaryStatus` TINYINT(3) UNSIGNED NULL DEFAULT NULL,
-  `prfMaritalStatus` TINYINT(3) UNSIGNED NULL DEFAULT NULL,
-  `prfImage` VARCHAR(128) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `prfAddressCoordinates` VARCHAR(64) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `prfSignupCoordinates` VARCHAR(64) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `prfLastLoginCoordinates` VARCHAR(64) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `prfCreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `prfCreatedBy` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
-  `prfUpdatedAt` DATETIME NULL DEFAULT NULL,
-  `prfUpdatedBy` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
-  PRIMARY KEY (`prf_usrID`) USING BTREE,
-  INDEX `FK_tblProfile_tblUser_creator` (`prfCreatedBy`) USING BTREE,
-  INDEX `FK_tblProfile_tblUser_modifier` (`prfUpdatedBy`) USING BTREE,
-  INDEX `FK_tblProfile_tblGeoCountry` (`prfCountryID`) USING BTREE,
-  INDEX `FK_tblProfile_tblGeoState` (`prfStateID`) USING BTREE,
-  INDEX `FK_tblProfile_tblGeoCityOrVillage` (`prfCityOrVillageID`) USING BTREE,
-  INDEX `FK_tblProfile_tblGeoTown` (`prfTownID`) USING BTREE,
-  CONSTRAINT `FK_tblProfile_tblGeoCityOrVillage` FOREIGN KEY (`prfCityOrVillageID`) REFERENCES `tblGeoCityOrVillage` (`ctvID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT `FK_tblProfile_tblGeoCountry` FOREIGN KEY (`prfCountryID`) REFERENCES `tblGeoCountry` (`cntrID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT `FK_tblProfile_tblGeoState` FOREIGN KEY (`prfStateID`) REFERENCES `tblGeoState` (`sttID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT `FK_tblProfile_tblGeoTown` FOREIGN KEY (`prfTownID`) REFERENCES `tblGeoTown` (`twnID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT `FK_tblProfile_tblUser` FOREIGN KEY (`prf_usrID`) REFERENCES `tblUser` (`usrID`) ON UPDATE NO ACTION ON DELETE CASCADE,
-  CONSTRAINT `FK_tblProfile_tblUser_creator` FOREIGN KEY (`prfCreatedBy`) REFERENCES `tblUser` (`usrID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT `FK_tblProfile_tblUser_modifier` FOREIGN KEY (`prfUpdatedBy`) REFERENCES `tblUser` (`usrID`) ON UPDATE NO ACTION ON DELETE NO ACTION
+CREATE TABLE `tblSession` (
+	`ssnID` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`ssnUserID` BIGINT(20) UNSIGNED NOT NULL,
+	`ssnJWT` VARCHAR(2048) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	`ssnMd5JWT` VARCHAR(32) AS (md5(`ssnJWT`)) virtual,
+	`ssnStatus` CHAR(1) NOT NULL DEFAULT 'P' COMMENT 'P:Pending, A:Active, R:Removed' COLLATE 'utf8mb4_unicode_ci',
+	`ssnExpireAt` DATETIME NULL DEFAULT NULL,
+	`ssnCreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`ssnUpdatedAt` DATETIME NULL DEFAULT NULL,
+	`ssnUpdatedBy` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
+	PRIMARY KEY (`ssnID`) USING BTREE,
+	UNIQUE INDEX `ssnMd5JWT` (`ssnMd5JWT`) USING BTREE,
+	INDEX `FK_tblSession_tblUser` (`ssnUserID`) USING BTREE,
+	INDEX `FK_tblSession_tblUser_modifier` (`ssnUpdatedBy`) USING BTREE,
+	CONSTRAINT `FK_tblSession_tblUser` FOREIGN KEY (`ssnUserID`) REFERENCES `tblUser` (`usrID`) ON UPDATE NO ACTION ON DELETE CASCADE,
+	CONSTRAINT `FK_tblSession_tblUser_modifier` FOREIGN KEY (`ssnUpdatedBy`) REFERENCES `tblUser` (`usrID`) ON UPDATE NO ACTION ON DELETE NO ACTION
 )
 COLLATE='utf8mb4_unicode_ci'
-DEFAULT CHARSET=utf8mb4
 ENGINE=InnoDB
 ;
 SQLSTR
-    );
+  );
+
+
+
+
+
+
+
 
 
 
     //)w,Ps&_2BpKe
 //N9qlkkKr)S25
 
-    $this->batchInsertIgnore('{{%User}}', ['usrID', 'usrEmail', 'usrMobile', 'usrAuthKey', 'usrPasswordHash', 'usrStatus'], [
-			[1, 'system@site.dom', NULL, 'zbV3Y5EEbdB7f6GUDLYpKq2GIeLcFaFB', NULL, 'D'],
-			[52, 'kambizzandi@gmail.com', '+989122983610', 'c7c_UcLyfFRd6-gP8KkuNpHVn6yhxYIt', '$2y$13$6n.PN8QpVWXdlP7sDqO.aOlX1V/ZsObdzZw.MWcXCXSJuI7qYj5Di', 'A'],
+    $this->batchInsertIgnore('{{%Role}}', ['rolID', 'rolName', 'rolParentID', 'rolPrivs'], [
+      [ 1, 'Full Access', NULL, '{"*":1}'],
+      [10, 'User',        NULL, '{"user":{"login":1,"logout":1}}'],
+    ]);
+
+    $this->execute(<<<SQLSTR
+ALTER TABLE `{{%Role}}` AUTO_INCREMENT=101;
+SQLSTR
+		);
+
+    $this->batchInsertIgnore('{{%User}}', [
+      'usrID',
+      'usrRoleID',
+      'usrEmail',
+      'usrMobile',
+      'usrGender',
+      'usrFirstName',
+      'usrLastName',
+      'usrStatus',
+    ], [
+      [ 1, NULL, 'system@site.dom',       NULL,            NULL, NULL,     NULL,    'D'],
+			[52, 1,    'kambizzandi@gmail.com', '+989122983610', 'M',  'Kambiz', 'Zandi', 'A'],
 		]);
 
     $this->execute(<<<SQLSTR

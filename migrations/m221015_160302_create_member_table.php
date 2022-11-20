@@ -1,4 +1,7 @@
 <?php
+/**
+ * @author Kambiz Zandi <kambizzandi@gmail.com>
+ */
 
 use yii\db\Migration;
 

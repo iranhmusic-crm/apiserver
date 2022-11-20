@@ -10,7 +10,7 @@ return [
 	'schemaCacheDuration' => 60, //3600; //seconds
 	'schemaCache' => 'cache',
 	'charset' => 'utf8mb4',
-	'tablePrefix' => 'tbl',
+	'tablePrefix' => 'tbl_',
 
 	// Schema cache options (for production environment)
 	//'enableSchemaCache' => true,
