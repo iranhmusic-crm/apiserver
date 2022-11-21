@@ -3,7 +3,7 @@
  * @author Kambiz Zandi <kambizzandi@gmail.com>
  */
 
-namespace app\controllers;
+namespace app\modules\aaa\controllers;
 
 use Yii;
 use yii\web\ForbiddenHttpException;
@@ -13,9 +13,11 @@ use yii\web\UnauthorizedHttpException;
 use app\classes\controller\BaseRestController;
 use app\classes\helpers\AuthHelper;
 use app\classes\helpers\PrivHelper;
-use app\models\AAA\UserModel;
-use app\models\AAA\SignupForm;
-use app\models\AAA\LoginForm;
+use app\modules\aaa\models\UserModel;
+use app\modules\aaa\models\SignupForm;
+use app\modules\aaa\models\LoginForm;
+use app\modules\aaa\models\ApproveCodeForm;
+use app\modules\aaa\models\ApprovalRequestModel;
 
 class UserController extends BaseRestController
 {
@@ -32,6 +34,8 @@ class UserController extends BaseRestController
 
 		$behaviors[BaseRestController::BEHAVIOR_AUTHENTICATOR]['except'] = [
 			'login',
+			'resend-approval-code',
+			'accept-approval',
 		];
 
 		// $behaviors['verbs'] = [
@@ -212,16 +216,39 @@ class UserController extends BaseRestController
 		];
 	}
 
+	public function actionResendApprovalCode()
+	{
+		$bodyParams = Yii::$app->request->getBodyParams();
+
+		if (empty($bodyParams['input']))
+			throw new NotFoundHttpException("parameters not provided");
+
+		ApprovalRequestModel::requestCode($bodyParams['input']);
+
+		return [
+			'result' => true,
+		];
+	}
+
 	public function actionRequestEmailApproval()
 	{
 		// Yii::$app->user->identity->usrID
 
 	}
 
-	public function actionApproveEmail()
+	public function actionAcceptApproval()
 	{
-		// Yii::$app->user->identity->usrID
+		$model = new ApproveCodeForm();
 
+		if ($model->load(Yii::$app->request->getBodyParams(), '') == false)
+			throw new NotFoundHttpException("parameters not provided");
+
+		if ($model->approve() == false)
+			throw new UnprocessableEntityHttpException(implode("\n", $model->getFirstErrors()));
+
+		return [
+			'result' => true,
+		];
 	}
 
 	public function actionRequestForgotPassword()

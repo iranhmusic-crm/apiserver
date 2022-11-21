@@ -3,7 +3,7 @@
  * @author Kambiz Zandi <kambizzandi@gmail.com>
  */
 
-namespace app\models\AAA;
+namespace app\modules\aaa\models;
 
 use yii\base\Model;
 use app\classes\validators\GroupRequiredValidator;
@@ -99,17 +99,17 @@ class LoginForm extends Model
     if ($this->validate('input') == false)
       return false;
 
-    list ($nomalizedInput, $type) = AuthHelper::recognizeAndNormalizeEmailOrMobileOrSSID($this->input);
+    list ($normalizedInput, $type) = AuthHelper::recognizeLoginPhrase($this->input);
 
-    if ($type == 'E') {
+    if ($type == AuthHelper::PHRASETYPE_EMAIL) {
       $this->_inputName = 'email';
-      $this->email = $nomalizedInput;
-    } else if ($type == 'M') {
+      $this->email = $normalizedInput;
+    } else if ($type == AuthHelper::PHRASETYPE_MOBILE) {
       $this->_inputName = 'mobile';
-      $this->mobile = $nomalizedInput;
-    } else if ($type == 'S') {
+      $this->mobile = $normalizedInput;
+    } else if ($type == AuthHelper::PHRASETYPE_SSID) {
       $this->_inputName = 'ssid';
-      $this->ssid = $nomalizedInput;
+      $this->ssid = $normalizedInput;
     } else
         throw new UnprocessableEntityHttpException('Invalid input');
 

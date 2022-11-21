@@ -7,10 +7,18 @@ $urlManager = require __DIR__ . '/urlManager.php';
 $config = [
 	'id' => 'basic',
 	'basePath' => dirname(__DIR__),
-	'bootstrap' => ['log'],
+	'bootstrap' => [
+		'log',
+		'aaa',
+	],
 	'aliases' => [
 		'@bower' => '@vendor/bower-asset',
 		'@npm'   => '@vendor/npm-asset',
+	],
+	'modules' => [
+		'aaa' => [
+			'class' => 'app\modules\aaa\Module',
+		],
 	],
 	'components' => [
 		'request' => [
@@ -28,7 +36,7 @@ $config = [
 			'class' => \yii\caching\FileCache::class,
 		],
 		'user' => [
-			'class' => \app\classes\components\User::class,
+			'class' => \app\modules\aaa\components\User::class,
 			'enableAutoLogin' => true,
 			'enableSession' => false,
 		],
@@ -56,7 +64,7 @@ $config = [
 			'class' => \app\classes\auth\Jwt::class,
 			'signer' => \bizley\jwt\Jwt::HS512,
 			'signingKey' => 'fDcXlBvkO9ND9UvhszmW4elXl2EehtpM',
-			'ttl' => 24 * 3600, //24 hours
+			// 'ttl' => 24 * 3600, //24 hours
 		],
 	],
 	'params' => $params,

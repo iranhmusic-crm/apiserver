@@ -3,11 +3,11 @@
  * @author Kambiz Zandi <kambizzandi@gmail.com>
  */
 
-namespace app\models\AAA;
+namespace app\modules\aaa\models;
 
 use yii\base\Model;
 use app\classes\helpers\AuthHelper;
-use app\models\AAA\UserModel;
+use app\modules\aaa\models\UserModel;
 use yii\web\UnprocessableEntityHttpException;
 
 class SignupForm extends Model
@@ -31,19 +31,19 @@ class SignupForm extends Model
 
   public function signup()
   {
-		list ($nomalizedInput, $type) = AuthHelper::recognizeAndNormalizeEmailOrMobileOrSSID($this->input);
+		list ($normalizedInput, $type) = AuthHelper::recognizeLoginPhrase($this->input);
 
 		$model = new UserModel();
 
-		if ($type == 'E') {
+		if ($type == AuthHelper::PHRASETYPE_EMAIL) {
 			$this->_inputName = 'email';
-			$model->usrEmail = $nomalizedInput;
-		} else if ($type == 'M') {
+			$model->usrEmail = $normalizedInput;
+		} else if ($type == AuthHelper::PHRASETYPE_MOBILE) {
 			$this->_inputName = 'mobile';
-			$model->usrMobile = $nomalizedInput;
-		// } else if ($type == 'S') {
+			$model->usrMobile = $normalizedInput;
+		// } else if ($type == AuthHelper::PHRASETYPE_SSID) {
 		// 	$this->_inputName = 'ssid';
-		// 	$model->usrSSID = $nomalizedInput;
+		// 	$model->usrSSID = $normalizedInput;
 		} else
 				throw new UnprocessableEntityHttpException('Invalid input');
 

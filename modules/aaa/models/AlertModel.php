@@ -3,18 +3,23 @@
  * @author Kambiz Zandi <kambizzandi@gmail.com>
  */
 
-namespace app\models\AAA;
+namespace app\modules\aaa\models;
 
 use yii\db\ActiveRecord;
-use yii\validators\DateValidator;
 use app\classes\validators\JsonValidator;
 
 class AlertModel extends ActiveRecord
 {
-  const STATUS_NEW = 'N';
+  const STATUS_NEW 				= 'N';
   const STATUS_PROCESSING = 'P';
-  const STATUS_SENT = 'S';
-  const STATUS_ERROR = 'E';
+  const STATUS_SENT 			= 'S';
+  const STATUS_ERROR 			= 'E';
+  const STATUS_REMOVED 		= 'R';
+
+	const TYPE_EMAIL_APPROVAL 	= 'emailApproval';
+	const TYPE_MOBILE_APPROVAL 	= 'mobileApproval';
+	const TYPE_EMAIL_APPROVED 	= 'emailApproved';
+	const TYPE_MOBILE_APPROVED 	= 'mobileApproved';
 
 	public static function tableName()
 	{
@@ -26,6 +31,7 @@ class AlertModel extends ActiveRecord
     return [
       ['alrID', 'integer'],
 			['alrUserID', 'integer'],
+			['alrApprovalRequestID', 'integer'],
 
 			['alrTypeKey', 'string', 'max' => 64],
 			['alrTypeKey', 'required'],

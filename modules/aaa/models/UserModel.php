@@ -3,7 +3,7 @@
  * @author Kambiz Zandi <kambizzandi@gmail.com>
  */
 
-namespace app\models\AAA;
+namespace app\modules\aaa\models;
 
 use Yii;
 use yii\db\ActiveRecord;
@@ -11,9 +11,9 @@ use yii\db\Expression;
 use yii\web\IdentityInterface;
 use app\classes\validators\GroupRequiredValidator;
 use app\classes\validators\JsonValidator;
-use app\models\AAA\RoleModel;
-use app\models\AAA\AlertModel;
-use app\models\AAA\ApprovalRequestModel;
+use app\modules\aaa\models\RoleModel;
+use app\modules\aaa\models\AlertModel;
+use app\modules\aaa\models\ApprovalRequestModel;
 use yii\web\UnprocessableEntityHttpException;
 
 class UserModel extends ActiveRecord implements IdentityInterface
@@ -146,67 +146,87 @@ class UserModel extends ActiveRecord implements IdentityInterface
     $settings = Yii::$app->params['settings'];
 
     if (empty($this->usrEmail) == false) {
-      //generate code
-      $code = Yii::$app->security->generateRandomString() . '_' . time();
+      ApprovalRequestModel::requestCode(
+        $this->usrEmail,
+        $this->usrID,
+        $this->usrGender,
+        $this->usrFirstName,
+        $this->usrLastName
+      );
 
-      //save to approvals
-      $expireTTL = $settings['AAA']['approvalRequest']['email']['expire-ttl'];
+      // //generate code
+      // $code = Yii::$app->security->generateRandomString() . '_' . time();
 
-      $approvalRequestModel = new ApprovalRequestModel();
-      $approvalRequestModel->aprUserID   = $this->usrID;
-      $approvalRequestModel->aprKeyType  = ApprovalRequestModel::KEYTYPE_EMAIL;
-      $approvalRequestModel->aprKey      = $this->usrEmail;
-      $approvalRequestModel->aprCode     = $code;
-      $approvalRequestModel->aprExpireAt = new Expression("DATE_ADD(NOW(), INTERVAL {$expireTTL} SECOND)");
-      if ($approvalRequestModel->save() == false)
-        throw new UnprocessableEntityHttpException("error in creating email approval request\n" . implode("\n", $approvalRequestModel->getFirstErrors()));
+      // //save to approvals
+      // $expireTTL = $settings['AAA']['approvalRequest']['email']['expire-ttl'];
 
-      //send alert 'emailApproval'
-      $alertModel = new AlertModel();
-			$alertModel->alrUserID  = $this->usrID;
-			$alertModel->alrTypeKey = 'emailApproval';
-			$alertModel->alrTarget  = $this->usrEmail;
-			$alertModel->alrInfo    = [
-        'gender' => $this->usrGender,
-        'firstName' => $this->usrFirstName,
-        'lastName' => $this->usrLastName,
-        'email' => $this->usrEmail,
-        'code' => $code,
-      ];
-      if ($alertModel->save() == false)
-        throw new UnprocessableEntityHttpException("error in creating mobile alert\n" . implode("\n", $alertModel->getFirstErrors()));
+      // $approvalRequestModel = new ApprovalRequestModel();
+      // $approvalRequestModel->aprUserID        = $this->usrID;
+      // $approvalRequestModel->aprKeyType       = ApprovalRequestModel::KEYTYPE_EMAIL;
+      // $approvalRequestModel->aprKey           = $this->usrEmail;
+      // $approvalRequestModel->aprCode          = $code;
+      // $approvalRequestModel->aprLastRequestAt = new Expression('NOW()');
+      // $approvalRequestModel->aprExpireAt      = new Expression("DATE_ADD(NOW(), INTERVAL {$expireTTL} SECOND)");
+      // if ($approvalRequestModel->save() == false)
+      //   throw new UnprocessableEntityHttpException("error in creating email approval request\n" . implode("\n", $approvalRequestModel->getFirstErrors()));
+
+      // //send alert 'emailApproval'
+      // $alertModel = new AlertModel();
+			// $alertModel->alrUserID  = $this->usrID;
+      // $alertModel->alrApprovalRequestID = $approvalRequestModel->aprID;
+			// $alertModel->alrTypeKey = AlertModel::TYPE_EMAIL_APPROVAL;
+			// $alertModel->alrTarget  = $this->usrEmail;
+			// $alertModel->alrInfo    = [
+      //   'gender' => $this->usrGender,
+      //   'firstName' => $this->usrFirstName,
+      //   'lastName' => $this->usrLastName,
+      //   'email' => $this->usrEmail,
+      //   'code' => $code,
+      // ];
+      // if ($alertModel->save() == false)
+      //   throw new UnprocessableEntityHttpException("error in creating mobile alert\n" . implode("\n", $alertModel->getFirstErrors()));
     }
 
     if (empty($this->usrMobile) == false) {
-      //generate code
-      $code = strval(rand(123456, 987654));
+      ApprovalRequestModel::requestCode(
+        $this->usrMobile,
+        $this->usrID,
+        $this->usrGender,
+        $this->usrFirstName,
+        $this->usrLastName
+      );
 
-      //save to approvals
-      $expireTTL = $settings['AAA']['approvalRequest']['mobile']['expire-ttl'];
+      // //generate code
+      // $code = strval(rand(123456, 987654));
 
-      $approvalRequestModel = new ApprovalRequestModel();
-      $approvalRequestModel->aprUserID   = $this->usrID;
-      $approvalRequestModel->aprKeyType  = ApprovalRequestModel::KEYTYPE_MOBILE;
-      $approvalRequestModel->aprKey      = $this->usrMobile;
-      $approvalRequestModel->aprCode     = $code;
-      $approvalRequestModel->aprExpireAt = new Expression("DATE_ADD(NOW(), INTERVAL {$expireTTL} SECOND)");
-      if ($approvalRequestModel->save() == false)
-        throw new UnprocessableEntityHttpException("error in creating mobile approval request\n" . implode("\n", $approvalRequestModel->getFirstErrors()));
+      // //save to approvals
+      // $expireTTL = $settings['AAA']['approvalRequest']['mobile']['expire-ttl'];
 
-      //send alert 'mobileApproval'
-      $alertModel = new AlertModel();
-			$alertModel->alrUserID  = $this->usrID;
-			$alertModel->alrTypeKey = 'mobileApproval';
-			$alertModel->alrTarget  = $this->usrEmail;
-			$alertModel->alrInfo    = [
-        'gender' => $this->usrGender,
-        'firstName' => $this->usrFirstName,
-        'lastName' => $this->usrLastName,
-        'mobile' => $this->usrMobile,
-        'code' => $code,
-      ];
-      if ($alertModel->save() == false)
-        throw new UnprocessableEntityHttpException("error in creating mobile alert\n" . implode("\n", $alertModel->getFirstErrors()));
+      // $approvalRequestModel = new ApprovalRequestModel();
+      // $approvalRequestModel->aprUserID        = $this->usrID;
+      // $approvalRequestModel->aprKeyType       = ApprovalRequestModel::KEYTYPE_MOBILE;
+      // $approvalRequestModel->aprKey           = $this->usrMobile;
+      // $approvalRequestModel->aprCode          = $code;
+      // $approvalRequestModel->aprLastRequestAt = new Expression('NOW()');
+      // $approvalRequestModel->aprExpireAt      = new Expression("DATE_ADD(NOW(), INTERVAL {$expireTTL} SECOND)");
+      // if ($approvalRequestModel->save() == false)
+      //   throw new UnprocessableEntityHttpException("error in creating mobile approval request\n" . implode("\n", $approvalRequestModel->getFirstErrors()));
+
+      // //send alert 'mobileApproval'
+      // $alertModel = new AlertModel();
+			// $alertModel->alrUserID  = $this->usrID;
+      // $alertModel->alrApprovalRequestID = $approvalRequestModel->aprID;
+			// $alertModel->alrTypeKey = AlertModel::TYPE_MOBILE_APPROVAL;
+			// $alertModel->alrTarget  = $this->usrEmail;
+			// $alertModel->alrInfo    = [
+      //   'gender' => $this->usrGender,
+      //   'firstName' => $this->usrFirstName,
+      //   'lastName' => $this->usrLastName,
+      //   'mobile' => $this->usrMobile,
+      //   'code' => $code,
+      // ];
+      // if ($alertModel->save() == false)
+      //   throw new UnprocessableEntityHttpException("error in creating mobile alert\n" . implode("\n", $alertModel->getFirstErrors()));
     }
   }
 

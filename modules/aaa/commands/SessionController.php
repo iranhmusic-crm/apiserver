@@ -3,11 +3,11 @@
  * @author Kambiz Zandi <kambizzandi@gmail.com>
  */
 
-namespace app\commands;
+namespace app\modules\aaa\commands;
 
 use yii\console\Controller;
 use yii\console\ExitCode;
-use app\models\AAA\SessionModel;
+use app\modules\aaa\models\SessionModel;
 
 class SessionController extends Controller
 {

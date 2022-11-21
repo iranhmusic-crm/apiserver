@@ -3,14 +3,14 @@
  * @author Kambiz Zandi <kambizzandi@gmail.com>
  */
 
-namespace app\classes\components;
+namespace app\modules\aaa\components;
 
 use Yii;
 use yii\web\User as BaseUser;
 
 class User extends BaseUser
 {
-	public $identityClass = \app\models\UserModel::class;
+	public $identityClass = \app\modules\aaa\models\UserModel::class;
 
 	//current sessions jwt token dataset
 	public ?\Lcobucci\JWT\Token\Plain $accessToken = null;

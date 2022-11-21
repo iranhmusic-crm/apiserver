@@ -3,7 +3,7 @@
  * @author Kambiz Zandi <kambizzandi@gmail.com>
  */
 
-namespace app\models\AAA;
+namespace app\modules\aaa\models;
 
 use yii\db\ActiveRecord;
 
