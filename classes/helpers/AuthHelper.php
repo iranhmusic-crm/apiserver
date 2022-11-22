@@ -7,6 +7,7 @@ namespace app\classes\helpers;
 
 use Yii;
 use app\classes\helpers\PrivHelper;
+use app\classes\helpers\PhoneHelper;
 use yii\web\UnauthorizedHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\UnprocessableEntityHttpException;
@@ -38,12 +39,9 @@ class AuthHelper
 
     //mobile
     try {
-      $phoneUtil = \libphonenumber\PhoneNumberUtil::getInstance();
-      $phoneNumber = $phoneUtil->parse($input, 'IR');
-      if ($phoneUtil->isValidNumber($phoneNumber)) {
-        $input = $phoneUtil->format($phoneNumber, \libphonenumber\PhoneNumberFormat::E164);
-        return [$input, static::PHRASETYPE_MOBILE];
-      }
+      $phone = PhoneHelper::normalizePhoneNumber($input);
+      if ($phone)
+        return [$phone, static::PHRASETYPE_MOBILE];
     } catch(\Exception $exp) {
       $message = $exp->getMessage();
     }
@@ -120,6 +118,17 @@ class AuthHelper
       ->withClaim('mobile', $user->usrMobile)
       // ->withClaim('firstName', $model->user->usrFirstName)
       // ->withClaim('lastName', $model->user->usrLastName)
+    ;
+
+    $mustApprove = [];
+    if (empty($user->usrEmail) == false && empty($user->usrEmailApprovedAt))
+      $mustApprove[] = 'email';
+    if (empty($user->usrMobile) == false && empty($user->usrMobileApprovedAt))
+      $mustApprove[] = 'mobile';
+    if (empty($mustApprove) == false)
+      $token->withClaim('mustApprove', implode(',', $mustApprove));
+
+    $token = $token
       ->getToken(
         Yii::$app->jwt->getConfiguration()->signer(),
         Yii::$app->jwt->getConfiguration()->signingKey()
@@ -134,7 +143,7 @@ class AuthHelper
     $sessionModel->save();
 
     //-----------------------
-    return $token;
+    return [$token, $mustApprove];
   }
 
   static function logout()

@@ -17,6 +17,16 @@ return [
           'expire-ttl' => 15 * 60, //15 minutes
         ],
       ],
+      'forgotPasswordRequest' => [
+        'email' => [
+          'resend-ttl' => 2 * 60, //2 minutes
+          'expire-ttl' => 2 * 24 * 3600, //2 days
+        ],
+        'mobile' => [
+          'resend-ttl' =>  2 * 60, // 2 minutes
+          'expire-ttl' => 15 * 60, //15 minutes
+        ],
+      ],
       // 'password' => [
       //   'age' => 0, //never expire
       //   'min-length' => 3,

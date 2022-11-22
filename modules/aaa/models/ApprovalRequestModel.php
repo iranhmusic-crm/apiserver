@@ -14,24 +14,32 @@ use yii\web\UnauthorizedHttpException;
 use yii\web\UnprocessableEntityHttpException;
 use app\modules\aaa\models\UserModel;
 use app\modules\aaa\models\AlertModel;
+use app\classes\helpers\GeneralHelper;
 
 class ApprovalRequestModel extends ActiveRecord
 {
-  const KEYTYPE_EMAIL = 'E';
+  const KEYTYPE_EMAIL  = 'E';
   const KEYTYPE_MOBILE = 'M';
 
-  const STATUS_NEW = 'N';
-  const STATUS_SENT = 'S';
+  const STATUS_NEW     = 'N';
+  const STATUS_SENT    = 'S';
   const STATUS_APPLIED = 'A';
   const STATUS_EXPIRED = 'E';
+
+  const ALERTTYPE_EMAIL_APPROVAL            = 'emailApproval';
+  const ALERTTYPE_MOBILE_APPROVAL           = 'mobileApproval';
+  const ALERTTYPE_EMAIL_APPROVAL_FOR_LOGIN  = 'emailApprovalForLogin';
+  const ALERTTYPE_MOBILE_APPROVAL_FOR_LOGIN = 'mobileApprovalForLogin';
+  const ALERTTYPE_EMAIL_APPROVED            = 'emailApproved';
+  const ALERTTYPE_MOBILE_APPROVED           = 'mobileApproved';
 
   public $ElapsedSeconds;
   public $IsExpired;
 
-	public static function tableName()
-	{
-		return '{{%AAA_ApprovalRequest}}';
-	}
+  public static function tableName()
+  {
+    return '{{%AAA_ApprovalRequest}}';
+  }
 
   public function rules()
   {
@@ -58,7 +66,7 @@ class ApprovalRequestModel extends ActiveRecord
       // ['aprUpdatedBy', 'integer'],
 
       [[
-        'aprUserID',
+        // 'aprUserID',
         'aprKeyType',
         'aprKey',
         'aprCode',
@@ -71,53 +79,21 @@ class ApprovalRequestModel extends ActiveRecord
   }
 
   public function behaviors()
-	{
-		return [
-			[
-				'class' => \app\classes\behaviors\RowDatesAttributesBehavior::class,
-				'createdAtAttribute' => 'aprCreatedAt',
-				// 'createdByAttribute' => 'aprCreatedBy',
-				// 'updatedAtAttribute' => 'aprUpdatedAt',
-				// 'updatedByAttribute' => 'aprUpdatedBy',
-			],
-		];
-	}
+  {
+    return [
+      [
+        'class' => \app\classes\behaviors\RowDatesAttributesBehavior::class,
+        'createdAtAttribute' => 'aprCreatedAt',
+        // 'createdByAttribute' => 'aprCreatedBy',
+        // 'updatedAtAttribute' => 'aprUpdatedAt',
+        // 'updatedByAttribute' => 'aprUpdatedBy',
+      ],
+    ];
+  }
 
   public function getUser()
   {
     return $this->hasOne(UserModel::class, ['usrID' => 'aprUserID']);
-  }
-
-  static function formatTimeFromSeconds($seconds)
-  {
-    $days = intval($seconds / (24 * 60 * 60));
-    $seconds -= $days * (24 * 60 * 60);
-
-    $hours = intval($seconds / (60 * 60));
-    $seconds -= $hours * (60 * 60);
-
-    $minutes = intval($seconds / 60);
-    $seconds -= $minutes * 60;
-
-    $parts = [];
-
-    if ($days > 0)
-      $parts[] = $days;
-
-    if (($days > 0) || ($hours > 0))
-      $parts[] = $hours;
-
-    if (($days > 0) || ($hours > 0) || ($minutes > 0))
-      $parts[] = $minutes;
-
-    $parts[] = $seconds;
-
-    $result = implode(':', $parts);
-
-    if (count($parts) == 1)
-      $result = '0:' . $result;
-
-    return $result;
   }
 
   static function requestCode(
@@ -125,7 +101,8 @@ class ApprovalRequestModel extends ActiveRecord
     $userID = null,
     $gender = null,
     $firstName = null,
-    $lastName = null
+    $lastName = null,
+    $forLogin = false
   ) {
     list ($normalizedInput, $inputType) = AuthHelper::checkLoginPhrase($emailOrMobile, false);
 
@@ -198,7 +175,7 @@ SQLSTR;
     if (empty($models) == false) {
       $approvalRequestModel = $models[0];
 
-      if (empty($userID)) {
+      if (empty($userID) && $approvalRequestModel->aprUserID != null) {
         $userID    = $approvalRequestModel->user->usrID;
         $gender    = $approvalRequestModel->user->usrGender;
         $firstName = $approvalRequestModel->user->usrFirstName;
@@ -211,14 +188,19 @@ SQLSTR;
 
         $approvalRequestModel = null;
       } else {
-        $resendTTL = ArrayHelper::getValue($settings,
-          'AAA.approvalRequest.' . ($inputType == 'E' ? 'email' : 'mobile') . 'resend-ttl', 120);
+        $cfgPath = implode('.', [
+          'AAA',
+          'approvalRequest',
+          $inputType == 'E' ? 'email' : 'mobile',
+          'resend-ttl'
+        ]);
+        $resendTTL = ArrayHelper::getValue($settings, $cfgPath, 120);
 
         if ($approvalRequestModel->ElapsedSeconds < $resendTTL) {
           $seconds = $resendTTL - $approvalRequestModel->ElapsedSeconds;
 
           throw new UnauthorizedHttpException('the waiting time has not elapsed. ('
-            . static::formatTimeFromSeconds($seconds) . ' remained)');
+            . GeneralHelper::formatTimeFromSeconds($seconds) . ' remained)');
         }
 
         $code = $approvalRequestModel->aprCode;
@@ -227,20 +209,26 @@ SQLSTR;
 
     if (empty($userID)) {
       $userModel = UserModel::find()
-        ->where(['usr' . ($inputType == 'E' ? 'Email' : 'Mobile') => $normalizedInput])
-        ->andWhere("usrStatus != 'R'")
+        ->where('usrStatus != \'' . UserModel::STATUS_REMOVED . '\'')
+        ->andWhere(['usr' . ($inputType == 'E' ? 'Email' : 'Mobile') => $normalizedInput])
         ->one();
 
-      if (!$userModel)
+      if (!$userModel && $forLogin == false)
         throw new UnauthorizedHttpException('user not found');
 
-      $userID    = $userModel->usrID;
-      $gender    = $userModel->usrGender;
-      $firstName = $userModel->usrFirstName;
-      $lastName  = $userModel->usrLastName;
+      if ($userModel) {
+        $userID    = $userModel->usrID;
+        $gender    = $userModel->usrGender;
+        $firstName = $userModel->usrFirstName;
+        $lastName  = $userModel->usrLastName;
+      }
     }
 
+    $codeIsNew = false;
+
     if (empty($code)) {
+      $codeIsNew = true;
+
       if ($inputType == static::KEYTYPE_EMAIL)
         $code = Yii::$app->security->generateRandomString() . '_' . time();
       else if ($inputType == static::KEYTYPE_MOBILE)
@@ -248,8 +236,13 @@ SQLSTR;
       else
         throw new UnauthorizedHttpException("invalid input type {$inputType}");
 
-      $expireTTL = ArrayHelper::getValue($settings,
-      'AAA.approvalRequest.' . ($inputType == 'E' ? 'email' : 'mobile') . 'expire-ttl', 15 * 60);
+      $cfgPath = implode('.', [
+        'AAA',
+        'approvalRequest',
+        $inputType == 'E' ? 'email' : 'mobile',
+        'expire-ttl'
+      ]);
+      $expireTTL = ArrayHelper::getValue($settings, $cfgPath, 20 * 60);
 
       $approvalRequestModel = new static();
       $approvalRequestModel->aprUserID        = $userID;
@@ -286,21 +279,30 @@ SQLSTR;
     ];
 
     if ($inputType == static::KEYTYPE_EMAIL) {
-      $alertModel->alrTypeKey = AlertModel::TYPE_EMAIL_APPROVAL;
+      $alertModel->alrTypeKey = ($forLogin
+        ? ApprovalRequestModel::ALERTTYPE_EMAIL_APPROVAL_FOR_LOGIN
+        : ApprovalRequestModel::ALERTTYPE_EMAIL_APPROVAL);
       $alrInfo['email'] = $normalizedInput;
     } else {
-      $alertModel->alrTypeKey = AlertModel::TYPE_MOBILE_APPROVAL;
+      $alertModel->alrTypeKey = ($forLogin
+        ? ApprovalRequestModel::ALERTTYPE_MOBILE_APPROVAL_FOR_LOGIN
+        : ApprovalRequestModel::ALERTTYPE_MOBILE_APPROVAL);
       $alrInfo['mobile'] = $normalizedInput;
     }
+
     $alertModel->alrInfo = $alrInfo;
 
     if ($alertModel->save() == false)
       throw new UnprocessableEntityHttpException("could not save alert\n" . implode("\n", $alertModel->getFirstErrors()));
+
+    return ($codeIsNew ? 'code sent' : 'code resent');
   }
 
   static function acceptCode($emailOrMobile, $code)
   {
     list ($normalizedInput, $inputType) = AuthHelper::checkLoginPhrase($emailOrMobile, false);
+
+    $alertTableName = AlertModel::tableName();
 
     //find current
     //------------------------------
@@ -319,7 +321,7 @@ SQLSTR;
       ->all();
 
     if (empty($models))
-      throw new UnauthorizedHttpException('request not found');
+      throw new UnauthorizedHttpException('invalid ' . ($inputType == 'E' ? 'email' : 'mobile') . ' and/or code');
 
     if (count($models) > 1)
       throw new UnauthorizedHttpException('more than one request found');
@@ -356,56 +358,89 @@ SQLSTR;
     //------------------------------
     $transaction = static::getDb()->beginTransaction();
     try {
-      //1: apr
+      //1: user
+      $sendAlert = null;
+      $userModel = $approvalRequestModel->user;
+      if ($userModel == null) {
+        $userModel = new UserModel();
+        $sendAlert = false;
+      }
+
+      $userModel->bypassRequestApprovalCode = true;
+
+      if ($approvalRequestModel->aprKeyType == static::KEYTYPE_EMAIL) {
+        $userModel->usrEmailApprovedAt = new Expression('NOW()');
+        if (empty($userModel->usrEmail)
+            || ($userModel->usrEmail != $approvalRequestModel->aprKey)
+        ) {
+          $userModel->usrEmail = $approvalRequestModel->aprKey;
+          if ($sendAlert === null)
+            $sendAlert = true;
+        }
+      }
+      else if ($approvalRequestModel->aprKeyType == static::KEYTYPE_MOBILE) {
+        $userModel->usrMobileApprovedAt = new Expression('NOW()');
+        if (empty($userModel->usrMobile)
+            || ($userModel->usrMobile != $approvalRequestModel->aprKey)
+        ) {
+          $userModel->usrMobile = $approvalRequestModel->aprKey;
+          if ($sendAlert === null)
+            $sendAlert = true;
+        }
+      }
+
+      if ($userModel->save() == false)
+        throw new UnprocessableEntityHttpException("could not save user\n" . implode("\n", $userModel->getFirstErrors()));
+
+      //2: apr
+      if ($approvalRequestModel->aprUserID == null)
+        $approvalRequestModel->aprUserID = $userModel->usrID;
       $approvalRequestModel->aprStatus = static::STATUS_APPLIED;
       $approvalRequestModel->aprApplyAt = new Expression('NOW()');
       if ($approvalRequestModel->save() == false)
         throw new UnprocessableEntityHttpException("could not save approval request\n" . implode("\n", $approvalRequestModel->getFirstErrors()));
 
-      //2: user
-      if ($approvalRequestModel->aprKeyType == static::KEYTYPE_EMAIL) {
-        $approvalRequestModel->user->usrEmailApprovedAt = new Expression('NOW()');
-        if (empty($approvalRequestModel->user->usrEmail)
-              || ($approvalRequestModel->user->usrEmail != $approvalRequestModel->aprKey))
-          $approvalRequestModel->user->usrEmail = $approvalRequestModel->aprKey;
+      //3: old alert
+      $qry =<<<SQLSTR
+          UPDATE {$alertTableName}
+             SET alrUserID = :UserID
+           WHERE alrApprovalRequestID = '{$approvalRequestModel->aprID}'
+             AND alrUserID IS NULL
+SQLSTR;
+      Yii::$app->getDb()->createCommand($qry, [
+        ':UserID' => $userModel->usrID,
+      ])->execute();
+
+      //4: send alert '[email|mobile]Approved'
+      if ($sendAlert === true) {
+        $alertModel = new AlertModel();
+        $alertModel->alrUserID  = $userModel->usrID;
+        // $alertModel->alrApprovalRequestID = null;
+        $alertModel->alrTarget  = $approvalRequestModel->aprKey;
+
+        $alrInfo = [
+          'gender' => $userModel->usrGender,
+          'firstName' => $userModel->usrFirstName,
+          'lastName' => $userModel->usrLastName,
+        ];
+
+        if ($approvalRequestModel->aprKeyType == static::KEYTYPE_EMAIL) {
+          $alertModel->alrTypeKey = ApprovalRequestModel::ALERTTYPE_EMAIL_APPROVED;
+          $alrInfo['email'] = $approvalRequestModel->aprKey;
+        } else {
+          $alertModel->alrTypeKey = ApprovalRequestModel::ALERTTYPE_MOBILE_APPROVED;
+          $alrInfo['mobile'] = $approvalRequestModel->aprKey;
+        }
+        $alertModel->alrInfo = $alrInfo;
+
+        if ($alertModel->save() == false)
+          throw new UnprocessableEntityHttpException("could not save alert\n" . implode("\n", $alertModel->getFirstErrors()));
       }
-      else if ($approvalRequestModel->aprKeyType == static::KEYTYPE_MOBILE) {
-        $approvalRequestModel->user->usrMobileApprovedAt = new Expression('NOW()');
-        if (empty($approvalRequestModel->user->usrMobile)
-              || ($approvalRequestModel->user->usrMobile != $approvalRequestModel->aprKey))
-          $approvalRequestModel->user->usrMobile = $approvalRequestModel->aprKey;
-      }
-
-      if ($approvalRequestModel->user->save() == false)
-        throw new UnprocessableEntityHttpException("could not save user\n" . implode("\n", $approvalRequestModel->user->getFirstErrors()));
-
-      //3: send alert '[email|mobile]Approved'
-      $alertModel = new AlertModel();
-			$alertModel->alrUserID  = $approvalRequestModel->user->usrID;
-      // $alertModel->alrApprovalRequestID = null;
-			$alertModel->alrTarget  = $approvalRequestModel->aprKey;
-
-      $alrInfo = [
-        'gender' => $approvalRequestModel->user->usrGender,
-        'firstName' => $approvalRequestModel->user->usrFirstName,
-        'lastName' => $approvalRequestModel->user->usrLastName,
-      ];
-
-      if ($approvalRequestModel->aprKeyType == static::KEYTYPE_EMAIL) {
-        $alertModel->alrTypeKey = AlertModel::TYPE_EMAIL_APPROVED;
-        $alrInfo['email'] = $approvalRequestModel->aprKey;
-      } else {
-        $alertModel->alrTypeKey = AlertModel::TYPE_MOBILE_APPROVED;
-        $alrInfo['mobile'] = $approvalRequestModel->aprKey;
-      }
-			$alertModel->alrInfo = $alrInfo;
-
-      if ($alertModel->save() == false)
-        throw new UnprocessableEntityHttpException("could not save alert\n" . implode("\n", $alertModel->getFirstErrors()));
 
       //
       $transaction->commit();
 
+      return $userModel;
     } catch (\Exception $e) {
         $transaction->rollBack();
         throw $e;
@@ -413,8 +448,6 @@ SQLSTR;
         $transaction->rollBack();
         throw $e;
     }
-
-    return true;
   }
 
 }

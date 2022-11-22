@@ -9,6 +9,8 @@ $config = [
 	'bootstrap' => [
 		'log',
 		'aaa',
+		'fin',
+		'mha',
 	],
 	'controllerNamespace' => 'app\commands',
 	'aliases' => [
@@ -19,6 +21,12 @@ $config = [
 	'modules' => [
 		'aaa' => [
 			'class' => 'app\modules\aaa\Module',
+		],
+		'fin' => [
+			'class' => 'app\modules\fin\Module',
+		],
+		'mha' => [
+			'class' => 'app\modules\mha\Module',
 		],
 	],
 	'components' => [
@@ -50,6 +58,8 @@ $config = [
 				// '@yii/web/migrations',
 				'@app/migrations',
 				'@app/modules/aaa/migrations',
+				'@app/modules/fin/migrations',
+				'@app/modules/mha/migrations',
 				// '@yii/../yii2-queue/src/drivers/db/migrations',
 			],
 		],

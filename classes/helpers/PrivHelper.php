@@ -26,10 +26,13 @@ class PrivHelper
 		}
 	}
 
-	static function hasPriv($path, $priv)
+	static function hasPriv($path, $priv='1')
 	{
 		if (empty($path))
 			throw new ServerErrorHttpException('path is empty');
+
+		if (Yii::$app->user->accessToken == null)
+			return false;
 
 		$privs = Yii::$app->user->accessToken->claims()->get('privs', []);
 		if (empty($privs))
@@ -92,7 +95,7 @@ class PrivHelper
 		return false;
 	}
 
-	static function checkPriv($path, $priv)
+	static function checkPriv($path, $priv='1')
 	{
 		if (static::hasPriv($path, $priv) == false)
 			throw new ForbiddenHttpException('access denied');

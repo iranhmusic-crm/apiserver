@@ -11,7 +11,7 @@ use app\classes\validators\JsonValidator;
 class RoleModel extends ActiveRecord
 {
 	CONST ROLE_FULL_ACCESS = 1;
-	CONST ROLE_USER = 10;
+	CONST ROLE_USER        = 10;
 
 	public static function tableName()
 	{

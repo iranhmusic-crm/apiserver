@@ -10,175 +10,227 @@ class m221015_160300_init extends Migration
 {
 	public function up()
 	{
-		$this->execute(<<<SQLSTR
-CREATE TABLE `tblRole` (
-  `rolID` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `rolName` VARCHAR(64) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-  `rolParentID` INT(10) UNSIGNED NULL DEFAULT NULL,
-  `rolPrivs` JSON NOT NULL,
-  `rolCreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `rolCreatedBy` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
-  `rolUpdatedAt` DATETIME NULL DEFAULT NULL,
-  `rolUpdatedBy` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
-  PRIMARY KEY (`rolID`) USING BTREE
-)
-COLLATE='utf8mb4_unicode_ci'
-ENGINE=InnoDB
-;
-SQLSTR
-		);
-
-		$this->execute(<<<SQLSTR
-CREATE TABLE `tblGeoCountry` (
-  `cntrID` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `cntrName` VARCHAR(64) NOT NULL,
+    $this->execute(<<<SQLSTR
+CREATE TABLE IF NOT EXISTS `tbl_AAA_GeoCountry` (
+  `cntrID` smallint unsigned NOT NULL AUTO_INCREMENT,
+  `cntrName` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   PRIMARY KEY (`cntrID`)
-)
-COLLATE='utf8mb4_unicode_ci'
-DEFAULT CHARSET=utf8mb4
-ENGINE=InnoDB
-;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SQLSTR
-		);
+    );
 
-		$this->execute(<<<SQLSTR
-CREATE TABLE `tblGeoState` (
-  `sttID` MEDIUMINT(7) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `sttName` VARCHAR(64) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-  `sttCountryID` SMALLINT(5) UNSIGNED NOT NULL,
+    $this->execute(<<<SQLSTR
+CREATE TABLE IF NOT EXISTS `tbl_AAA_GeoState` (
+  `sttID` mediumint unsigned NOT NULL AUTO_INCREMENT,
+  `sttName` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sttCountryID` smallint unsigned NOT NULL,
   PRIMARY KEY (`sttID`) USING BTREE,
-  INDEX `FK_tblGeoState_tblGeoCountry` (`sttCountryID`) USING BTREE,
-  CONSTRAINT `FK_tblGeoState_tblGeoCountry` FOREIGN KEY (`sttCountryID`) REFERENCES `tblGeoCountry` (`cntrID`) ON UPDATE NO ACTION ON DELETE CASCADE
-)
-COLLATE='utf8mb4_unicode_ci'
-DEFAULT CHARSET=utf8mb4
-ENGINE=InnoDB
-;
+  KEY `FK_tbl_AAA_GeoState_tbl_AAA_GeoCountry` (`sttCountryID`) USING BTREE,
+  CONSTRAINT `FK_tbl_AAA_GeoState_tbl_AAA_GeoCountry` FOREIGN KEY (`sttCountryID`) REFERENCES `tbl_AAA_GeoCountry` (`cntrID`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SQLSTR
     );
 
     $this->execute(<<<SQLSTR
-CREATE TABLE `tblGeoCityOrVillage` (
-  `ctvID` MEDIUMINT(7) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `ctvName` VARCHAR(64) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-  `ctvStateID` MEDIUMINT(7) UNSIGNED NOT NULL,
-  `ctvType` CHAR(1) NOT NULL DEFAULT 'C' COMMENT 'C:City, V:Village' COLLATE 'utf8mb4_unicode_ci',
+CREATE TABLE IF NOT EXISTS `tbl_AAA_GeoCityOrVillage` (
+  `ctvID` mediumint unsigned NOT NULL AUTO_INCREMENT,
+  `ctvName` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ctvStateID` mediumint unsigned NOT NULL,
+  `ctvType` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'C' COMMENT 'C:City, V:Village',
   PRIMARY KEY (`ctvID`) USING BTREE,
-  INDEX `FK_tblGeoCityOrVillage_tblGeoState` (`ctvStateID`) USING BTREE,
-  CONSTRAINT `FK_tblGeoCityOrVillage_tblGeoState` FOREIGN KEY (`ctvStateID`) REFERENCES `tblGeoState` (`sttID`) ON UPDATE NO ACTION ON DELETE CASCADE
-)
-COLLATE='utf8mb4_unicode_ci'
-DEFAULT CHARSET=utf8mb4
-ENGINE=InnoDB
-;
+  KEY `FK_tbl_AAA_GeoCityOrVillage_tbl_AAA_GeoState` (`ctvStateID`) USING BTREE,
+  CONSTRAINT `FK_tbl_AAA_GeoCityOrVillage_tbl_AAA_GeoState` FOREIGN KEY (`ctvStateID`) REFERENCES `tbl_AAA_GeoState` (`sttID`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SQLSTR
     );
 
     $this->execute(<<<SQLSTR
-CREATE TABLE `tblGeoTown` (
-	`twnID` MEDIUMINT(7) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`twnName` VARCHAR(64) NOT NULL COLLATE 'utf8mb4_unicode_ci',
-	`twnCityID` MEDIUMINT(7) UNSIGNED NOT NULL,
-	PRIMARY KEY (`twnID`) USING BTREE,
-	INDEX `FK_tblGeoTown_tblGeoCityOrVillage` (`twnCityID`) USING BTREE,
-	CONSTRAINT `FK_tblGeoTown_tblGeoCityOrVillage` FOREIGN KEY (`twnCityID`) REFERENCES `tblGeoCityOrVillage` (`ctvID`) ON UPDATE NO ACTION ON DELETE CASCADE
-)
-COLLATE='utf8mb4_unicode_ci'
-DEFAULT CHARSET=utf8mb4
-ENGINE=InnoDB
-;
+CREATE TABLE IF NOT EXISTS `tbl_AAA_GeoTown` (
+  `twnID` mediumint unsigned NOT NULL AUTO_INCREMENT,
+  `twnName` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `twnCityID` mediumint unsigned NOT NULL,
+  PRIMARY KEY (`twnID`) USING BTREE,
+  KEY `FK_tbl_AAA_GeoTown_tbl_AAA_GeoCityOrVillage` (`twnCityID`) USING BTREE,
+  CONSTRAINT `FK_tbl_AAA_GeoTown_tbl_AAA_GeoCityOrVillage` FOREIGN KEY (`twnCityID`) REFERENCES `tbl_AAA_GeoCityOrVillage` (`ctvID`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SQLSTR
     );
 
     $this->execute(<<<SQLSTR
-CREATE TABLE `tblUser` (
-  `usrID` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `usrRoleID` INT(10) UNSIGNED NULL DEFAULT NULL,
-  `usrPrivs` JSON NULL DEFAULT NULL,
-  `usrEmail` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `usrEmailApprovedAt` TIMESTAMP NULL DEFAULT NULL,
-  `usrConfirmEmailToken` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `usrMobile` VARCHAR(32) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `usrMobileConfirmToken` MEDIUMINT(7) NULL DEFAULT NULL,
-  `usrMobileApprovedAt` TIMESTAMP NULL DEFAULT NULL,
-  `usrSSID` VARCHAR(16) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `usrPasswordHash` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `usrPasswordResetToken` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `usrGender` CHAR(1) NULL DEFAULT NULL COMMENT 'M:Male, F:Female' COLLATE 'utf8mb4_unicode_ci',
-  `usrFirstName` VARCHAR(128) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `usrLastName` VARCHAR(128) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `usrCountryID` SMALLINT(5) UNSIGNED NULL DEFAULT NULL,
-  `usrStateID` MEDIUMINT(7) UNSIGNED NULL DEFAULT NULL,
-  `usrCityOrVillageID` MEDIUMINT(7) UNSIGNED NULL DEFAULT NULL,
-  `usrTownID` MEDIUMINT(7) UNSIGNED NULL DEFAULT NULL,
-  `usrBirthDate` DATE NULL DEFAULT NULL,
-  `usrHomeAddress` VARCHAR(2048) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `usrZipCode` VARCHAR(32) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `usrImage` VARCHAR(128) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `usrSignupCoordinates` VARCHAR(64) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-  `usrStatus` CHAR(1) NOT NULL DEFAULT 'A' COMMENT 'A:Active, D:Disable, R:Removed' COLLATE 'utf8mb4_unicode_ci',
-  `usrCreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `usrCreatedBy` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
-  `usrUpdatedAt` DATETIME NULL DEFAULT NULL,
-  `usrUpdatedBy` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
-  `usrRemovedAt` INT(10) UNSIGNED NOT NULL DEFAULT '0',
-  `usrRemovedBy` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
+CREATE TABLE IF NOT EXISTS `tbl_AAA_Role` (
+  `rolID` int unsigned NOT NULL AUTO_INCREMENT,
+  `rolName` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `rolParentID` int unsigned DEFAULT NULL,
+  `rolPrivs` json NOT NULL,
+  `rolCreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `rolCreatedBy` bigint unsigned DEFAULT NULL,
+  `rolUpdatedAt` datetime DEFAULT NULL,
+  `rolUpdatedBy` bigint unsigned DEFAULT NULL,
+  PRIMARY KEY (`rolID`),
+  KEY `FK_tbl_AAA_Role_tbl_AAA_User_creator` (`rolCreatedBy`),
+  KEY `FK_tbl_AAA_Role_tbl_AAA_User_modifier` (`rolUpdatedBy`),
+  CONSTRAINT `FK_tbl_AAA_Role_tbl_AAA_User_creator` FOREIGN KEY (`rolCreatedBy`) REFERENCES `tbl_AAA_User` (`usrID`),
+  CONSTRAINT `FK_tbl_AAA_Role_tbl_AAA_User_modifier` FOREIGN KEY (`rolUpdatedBy`) REFERENCES `tbl_AAA_User` (`usrID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+SQLSTR
+    );
+
+    $this->execute(<<<SQLSTR
+CREATE TABLE IF NOT EXISTS `tbl_AAA_User` (
+  `usrID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `usrRoleID` int unsigned DEFAULT NULL,
+  `usrPrivs` json DEFAULT NULL,
+  `usrEmail` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `usrEmailApprovedAt` datetime DEFAULT NULL,
+  `usrMobile` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `usrMobileApprovedAt` datetime DEFAULT NULL,
+  `usrSSID` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `usrPasswordHash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `usrPasswordCreatedAt` datetime DEFAULT NULL,
+  `usrGender` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'M:Male, F:Female',
+  `usrFirstName` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `usrLastName` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `usrCountryID` smallint unsigned DEFAULT NULL,
+  `usrStateID` mediumint unsigned DEFAULT NULL,
+  `usrCityOrVillageID` mediumint unsigned DEFAULT NULL,
+  `usrTownID` mediumint unsigned DEFAULT NULL,
+  `usrBirthDate` date DEFAULT NULL,
+  `usrHomeAddress` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `usrZipCode` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `usrImage` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `usrSignupCoordinates` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `usrStatus` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'A' COMMENT 'A:Active, D:Disable, R:Removed',
+  `usrCreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `usrCreatedBy` bigint unsigned DEFAULT NULL,
+  `usrUpdatedAt` datetime DEFAULT NULL,
+  `usrUpdatedBy` bigint unsigned DEFAULT NULL,
+  `usrRemovedAt` int unsigned NOT NULL DEFAULT '0',
+  `usrRemovedBy` bigint unsigned DEFAULT NULL,
   PRIMARY KEY (`usrID`) USING BTREE,
-  UNIQUE INDEX `password_reset_token` (`usrPasswordResetToken`) USING BTREE,
-  UNIQUE INDEX `usrConfirmEmailToken` (`usrConfirmEmailToken`) USING BTREE,
-  UNIQUE INDEX `usrEmail_usrRemovedAt` (`usrEmail`, `usrRemovedAt`) USING BTREE,
-  UNIQUE INDEX `usrMobile_usrRemovedAt` (`usrMobile`, `usrRemovedAt`) USING BTREE,
-  UNIQUE INDEX `usrSSID_usrRemovedAt` (`usrSSID`, `usrRemovedAt`) USING BTREE,
-  INDEX `FK_tblUser_tblUser_creator` (`usrCreatedBy`) USING BTREE,
-  INDEX `FK_tblUser_tblUser_modifier` (`usrUpdatedBy`) USING BTREE,
-  INDEX `FK_tblUser_tblRole` (`usrRoleID`) USING BTREE,
-  INDEX `FK_tblUser_tblGeoCountry` (`usrCountryID`) USING BTREE,
-  INDEX `FK_tblUser_tblGeoState` (`usrStateID`) USING BTREE,
-  INDEX `FK_tblUser_tblGeoCityOrVillage` (`usrCityOrVillageID`) USING BTREE,
-  INDEX `FK_tblUser_tblGeoTown` (`usrTownID`) USING BTREE,
-  CONSTRAINT `FK_tblUser_tblGeoCityOrVillage` FOREIGN KEY (`usrCityOrVillageID`) REFERENCES `tblGeoCityOrVillage` (`ctvID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT `FK_tblUser_tblGeoCountry` FOREIGN KEY (`usrCountryID`) REFERENCES `tblGeoCountry` (`cntrID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT `FK_tblUser_tblGeoState` FOREIGN KEY (`usrStateID`) REFERENCES `tblGeoState` (`sttID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT `FK_tblUser_tblGeoTown` FOREIGN KEY (`usrTownID`) REFERENCES `tblGeoTown` (`twnID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT `FK_tblUser_tblRole` FOREIGN KEY (`usrRoleID`) REFERENCES `tblRole` (`rolID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT `FK_tblUser_tblUser_creator` FOREIGN KEY (`usrCreatedBy`) REFERENCES `tblUser` (`usrID`) ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT `FK_tblUser_tblUser_modifier` FOREIGN KEY (`usrUpdatedBy`) REFERENCES `tblUser` (`usrID`) ON UPDATE NO ACTION ON DELETE NO ACTION
-)
-COLLATE='utf8mb4_unicode_ci'
-ENGINE=InnoDB
-;
+  UNIQUE KEY `usrEmail_usrRemovedAt` (`usrEmail`,`usrRemovedAt`),
+  UNIQUE KEY `usrMobile_usrRemovedAt` (`usrMobile`,`usrRemovedAt`),
+  UNIQUE KEY `usrSSID_usrRemovedAt` (`usrSSID`,`usrRemovedAt`),
+  KEY `FK_tbl_AAA_User_tbl_AAA_User_creator` (`usrCreatedBy`) USING BTREE,
+  KEY `FK_tbl_AAA_User_tbl_AAA_User_modifier` (`usrUpdatedBy`) USING BTREE,
+  KEY `FK_tbl_AAA_User_tbl_AAA_Role` (`usrRoleID`),
+  KEY `FK_tbl_AAA_User_tbl_AAA_GeoCountry` (`usrCountryID`),
+  KEY `FK_tbl_AAA_User_tbl_AAA_GeoState` (`usrStateID`),
+  KEY `FK_tbl_AAA_User_tbl_AAA_GeoCityOrVillage` (`usrCityOrVillageID`),
+  KEY `FK_tbl_AAA_User_tbl_AAA_GeoTown` (`usrTownID`),
+  KEY `FK_tbl_AAA_User_tbl_AAA_User_remover` (`usrRemovedBy`),
+  CONSTRAINT `FK_tbl_AAA_User_tbl_AAA_User_remover` FOREIGN KEY (`usrRemovedBy`) REFERENCES `tbl_AAA_User` (`usrID`),
+  CONSTRAINT `FK_tbl_AAA_User_tbl_AAA_GeoCityOrVillage` FOREIGN KEY (`usrCityOrVillageID`) REFERENCES `tbl_AAA_GeoCityOrVillage` (`ctvID`),
+  CONSTRAINT `FK_tbl_AAA_User_tbl_AAA_GeoCountry` FOREIGN KEY (`usrCountryID`) REFERENCES `tbl_AAA_GeoCountry` (`cntrID`),
+  CONSTRAINT `FK_tbl_AAA_User_tbl_AAA_GeoState` FOREIGN KEY (`usrStateID`) REFERENCES `tbl_AAA_GeoState` (`sttID`),
+  CONSTRAINT `FK_tbl_AAA_User_tbl_AAA_GeoTown` FOREIGN KEY (`usrTownID`) REFERENCES `tbl_AAA_GeoTown` (`twnID`),
+  CONSTRAINT `FK_tbl_AAA_User_tbl_AAA_Role` FOREIGN KEY (`usrRoleID`) REFERENCES `tbl_AAA_Role` (`rolID`),
+  CONSTRAINT `FK_tbl_AAA_User_tbl_AAA_User_creator` FOREIGN KEY (`usrCreatedBy`) REFERENCES `tbl_AAA_User` (`usrID`),
+  CONSTRAINT `FK_tbl_AAA_User_tbl_AAA_User_modifier` FOREIGN KEY (`usrUpdatedBy`) REFERENCES `tbl_AAA_User` (`usrID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SQLSTR
-		);
+    );
 
-		$this->execute(<<<SQLSTR
-CREATE TABLE `tblSession` (
-	`ssnID` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`ssnUserID` BIGINT(20) UNSIGNED NOT NULL,
-	`ssnJWT` VARCHAR(2048) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	`ssnMd5JWT` VARCHAR(32) AS (md5(`ssnJWT`)) virtual,
-	`ssnStatus` CHAR(1) NOT NULL DEFAULT 'P' COMMENT 'P:Pending, A:Active, R:Removed' COLLATE 'utf8mb4_unicode_ci',
-	`ssnExpireAt` DATETIME NULL DEFAULT NULL,
-	`ssnCreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	`ssnUpdatedAt` DATETIME NULL DEFAULT NULL,
-	`ssnUpdatedBy` BIGINT(20) UNSIGNED NULL DEFAULT NULL,
-	PRIMARY KEY (`ssnID`) USING BTREE,
-	UNIQUE INDEX `ssnMd5JWT` (`ssnMd5JWT`) USING BTREE,
-	INDEX `FK_tblSession_tblUser` (`ssnUserID`) USING BTREE,
-	INDEX `FK_tblSession_tblUser_modifier` (`ssnUpdatedBy`) USING BTREE,
-	CONSTRAINT `FK_tblSession_tblUser` FOREIGN KEY (`ssnUserID`) REFERENCES `tblUser` (`usrID`) ON UPDATE NO ACTION ON DELETE CASCADE,
-	CONSTRAINT `FK_tblSession_tblUser_modifier` FOREIGN KEY (`ssnUpdatedBy`) REFERENCES `tblUser` (`usrID`) ON UPDATE NO ACTION ON DELETE NO ACTION
-)
-COLLATE='utf8mb4_unicode_ci'
-ENGINE=InnoDB
-;
+    $this->execute(<<<SQLSTR
+CREATE TABLE IF NOT EXISTS `tbl_AAA_Session` (
+  `ssnID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `ssnUserID` bigint unsigned NOT NULL,
+  `ssnJWT` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ssnJWTMD5` varchar(32) COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS (md5(`ssnJWT`)) VIRTUAL,
+  `ssnStatus` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'P' COMMENT 'P:Pending, A:Active, R:Removed',
+  `ssnExpireAt` datetime DEFAULT NULL,
+  `ssnCreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `ssnUpdatedAt` datetime DEFAULT NULL,
+  `ssnUpdatedBy` bigint unsigned DEFAULT NULL,
+  PRIMARY KEY (`ssnID`),
+  UNIQUE KEY `ssnMd5JWT` (`ssnJWTMD5`) USING BTREE,
+  KEY `FK_tbl_AAA_Session_tbl_AAA_User_modifier` (`ssnUpdatedBy`),
+  KEY `FK_tbl_AAA_Session_tbl_AAA_User` (`ssnUserID`) USING BTREE,
+  CONSTRAINT `FK_tbl_AAA_Session_tbl_AAA_User` FOREIGN KEY (`ssnUserID`) REFERENCES `tbl_AAA_User` (`usrID`) ON DELETE CASCADE,
+  CONSTRAINT `FK_tbl_AAA_Session_tbl_AAA_User_modifier` FOREIGN KEY (`ssnUpdatedBy`) REFERENCES `tbl_AAA_User` (`usrID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SQLSTR
-  );
+    );
 
+    $this->execute(<<<SQLSTR
+CREATE TABLE IF NOT EXISTS `tbl_AAA_ApprovalRequest` (
+  `aprID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `aprUserID` bigint unsigned DEFAULT NULL,
+  `aprKeyType` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'E:Email, M:Mobile',
+  `aprKey` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `aprCode` varchar(48) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `aprLastRequestAt` datetime NOT NULL,
+  `aprExpireAt` datetime NOT NULL,
+  `aprSentAt` datetime DEFAULT NULL,
+  `aprApplyAt` datetime DEFAULT NULL,
+  `aprStatus` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'N' COMMENT 'N:New, S:Sent, A:Applied, E:Expired',
+  `aprCreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`aprID`),
+  KEY `FK_tbl_AAA_ApprovalRequest_tbl_AAA_User` (`aprUserID`),
+  CONSTRAINT `FK_tbl_AAA_ApprovalRequest_tbl_AAA_User` FOREIGN KEY (`aprUserID`) REFERENCES `tbl_AAA_User` (`usrID`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+SQLSTR
+    );
 
+    $this->execute(<<<SQLSTR
+CREATE TABLE IF NOT EXISTS `tbl_AAA_ForgotPasswordRequest` (
+  `fprID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `fprUserID` bigint unsigned NOT NULL,
+  `fprRequestedBy` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'E:Email, M:Mobile',
+  `fprCode` varchar(48) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `fprLastRequestAt` datetime NOT NULL,
+  `fprExpireAt` datetime NOT NULL,
+  `fprSentAt` datetime DEFAULT NULL,
+  `fprApplyAt` datetime DEFAULT NULL,
+  `fprStatus` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'N' COMMENT 'N:New, S:Sent, A:Applied, E:Expired',
+  `fprCreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`fprID`),
+  KEY `FK_tbl_AAA_ForgotPasswordRequest_tbl_AAA_User` (`fprUserID`),
+  CONSTRAINT `FK_tbl_AAA_ForgotPasswordRequest_tbl_AAA_User` FOREIGN KEY (`fprUserID`) REFERENCES `tbl_AAA_User` (`usrID`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+SQLSTR
+    );
 
+    $this->execute(<<<SQLSTR
+CREATE TABLE IF NOT EXISTS `tbl_AAA_AlertType` (
+  `altID` int unsigned NOT NULL AUTO_INCREMENT,
+  `altKey` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `altType` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'E:Email, M:Mobile',
+  `altBody` mediumtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`altID`),
+  UNIQUE KEY `altKey` (`altKey`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+SQLSTR
+    );
 
-
-
+    $this->execute(<<<SQLSTR
+CREATE TABLE IF NOT EXISTS `tbl_AAA_Alert` (
+  `alrID` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `alrUserID` bigint unsigned DEFAULT NULL,
+  `alrApprovalRequestID` bigint unsigned DEFAULT NULL,
+  `alrForgotPasswordRequestID` bigint unsigned DEFAULT NULL,
+  `alrTypeKey` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `alrTarget` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `alrInfo` json NOT NULL,
+  `alrLockedAt` datetime DEFAULT NULL,
+  `alrLockedBy` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `alrLastTryAt` datetime DEFAULT NULL,
+  `alrSentAt` datetime DEFAULT NULL,
+  `alrResult` json DEFAULT NULL,
+  `alrStatus` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'N' COMMENT 'N:New, P:Processing, S:Sent, E:Error, R:Removed',
+  `alrCreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `alrCreatedBy` bigint unsigned DEFAULT NULL,
+  PRIMARY KEY (`alrID`),
+  KEY `FK_tbl_AAA_Alert_tbl_AAA_User` (`alrUserID`),
+  KEY `FK_tbl_AAA_Alert_tbl_AAA_User_creator` (`alrCreatedBy`),
+  KEY `FK_tbl_AAA_Alert_tbl_AAA_ApprovalRequest` (`alrApprovalRequestID`),
+  KEY `FK_tbl_AAA_Alert_tbl_AAA_ForgotPasswordRequest` (`alrForgotPasswordRequestID`),
+  CONSTRAINT `FK_tbl_AAA_Alert_tbl_AAA_ApprovalRequest` FOREIGN KEY (`alrApprovalRequestID`) REFERENCES `tbl_AAA_ApprovalRequest` (`aprID`) ON DELETE CASCADE,
+  CONSTRAINT `FK_tbl_AAA_Alert_tbl_AAA_ForgotPasswordRequest` FOREIGN KEY (`alrForgotPasswordRequestID`) REFERENCES `tbl_AAA_ForgotPasswordRequest` (`fprID`) ON DELETE CASCADE,
+  CONSTRAINT `FK_tbl_AAA_Alert_tbl_AAA_User` FOREIGN KEY (`alrUserID`) REFERENCES `tbl_AAA_User` (`usrID`) ON DELETE CASCADE,
+  CONSTRAINT `FK_tbl_AAA_Alert_tbl_AAA_User_creator` FOREIGN KEY (`alrCreatedBy`) REFERENCES `tbl_AAA_User` (`usrID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+SQLSTR
+    );
 
 
 
@@ -188,7 +240,7 @@ SQLSTR
 
     $this->batchInsertIgnore('{{%Role}}', ['rolID', 'rolName', 'rolParentID', 'rolPrivs'], [
       [ 1, 'Full Access', NULL, '{"*":1}'],
-      [10, 'User',        NULL, '{"user":{"login":1,"logout":1}}'],
+      [10, 'User',        NULL, '{"aaa":{"user":{"login":1,"logout":1}}}'],
     ]);
 
     $this->execute(<<<SQLSTR

@@ -1,19 +1,11 @@
 <?php
+/**
+ * @author Kambiz Zandi <kambizzandi@gmail.com>
+ */
+
 namespace app\modules\aaa;
 
-use Yii;
-use yii\db\Query;
 use yii\base\BootstrapInterface;
-use shopack\base\helpers\Url;
-use shopack\base\helpers\Html;
-use shopack\base\helpers\ArrayHelper;
-use shopack\base\helpers\FileHelper;
-use shopack\base\db\ActiveRecord; //shopack\multilanguage\db\ActiveRecord;
-use shopack\base\interfaces\ShopackModuleInterface;
-use shopack\app\models\AppConfigModel;
-use shopack\app\models\UserModel;
-use shopack\app\classes\jobs\ProcessSmsJob;
-use shopack\app\classes\jobs\DeleteOldUserHistoryJob;
 
 class Module extends \yii\base\Module implements BootstrapInterface
 {
@@ -37,14 +29,24 @@ class Module extends \yii\base\Module implements BootstrapInterface
 						'POST signup' => 'signup',
 						'POST login' => 'login',
 						'GET,POST logout' => 'logout',
-						'GET,POST whoAmI' => 'whoAmI',
+						'GET,POST whoami' => 'who-am-i',
 
-						'POST resend-approval-code' => 'resend-approval-code',
+						'POST login-by-mobile' => 'login-by-mobile',
+
+						'POST request-approval-code' => 'request-approval-code',
 						'POST accept-approval' => 'accept-approval',
 
-						'POST requestForgotPassword' => 'requestForgotPassword',
-						'POST changePassword' => 'changePassword',
+						'POST request-forgot-password' => 'request-forgot-password',
+						'POST password-reset-by-forgot-code' => 'password-reset-by-forgot-code',
+						'POST password-reset' => 'password-reset',
+						'POST password-change' => 'password-change',
 					],
+				],
+				[
+					'class' => \yii\rest\UrlRule::class,
+					// 'prefix' => 'v1',
+					'controller' => [$this->id . '/role'],
+					'pluralize' => false,
 				],
 			];
 

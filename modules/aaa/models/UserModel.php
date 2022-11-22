@@ -22,6 +22,9 @@ class UserModel extends ActiveRecord implements IdentityInterface
   const STATUS_INACTIVE = 'D';
   const STATUS_REMOVED = 'R';
 
+  public $usrPassword;
+  public $bypassRequestApprovalCode = false;
+
   use \app\classes\db\SoftDeleteActiveRecordTrait;
 	public function softDelete()
 	{
@@ -74,6 +77,8 @@ class UserModel extends ActiveRecord implements IdentityInterface
       // ['usrAuthKey', 'string', 'max' => 32],
       // ['usrAuthKey', 'required'],
 
+      ['usrPassword', 'string'], //, 'min' => 4],
+
       ['usrPasswordHash', 'string', 'max' => 255],
       ['usrPasswordCreatedAt', 'safe'],
 
@@ -119,24 +124,24 @@ class UserModel extends ActiveRecord implements IdentityInterface
 
   public function save($runValidation = true, $attributeNames = null)
   {
-    $clearPassword = false;
-    if (empty($this->getDirtyAttributes(['usrPasswordHash'])) == false) {
-      $clearPassword = $this->usrPasswordHash;
-      $this->usrPasswordHash = Yii::$app->security->generatePasswordHash($this->usrPasswordHash);
+    // $clearPassword = false;
+    // if (empty($this->getDirtyAttributes(['usrPassword'])) == false) {
+    if (empty($this->usrPassword) == false) {
+      $this->usrPasswordHash = Yii::$app->security->generatePasswordHash($this->usrPassword);
       $this->usrPasswordCreatedAt = new Expression('NOW()');
     }
 
     try {
       $result = parent::save($runValidation, $attributeNames);
 
-      if ($result == false && $clearPassword != false)
-        $this->usrPasswordHash = $clearPassword;
+      // if ($result == false && $clearPassword != false)
+      //   $this->usrPasswordHash = $clearPassword;
 
       return $result;
 
     } catch (\Throwable $th) {
-      if ($clearPassword != false)
-        $this->usrPasswordHash = $clearPassword;
+      // if ($clearPassword != false)
+      //   $this->usrPasswordHash = $clearPassword;
       throw($th);
     }
   }
@@ -145,89 +150,27 @@ class UserModel extends ActiveRecord implements IdentityInterface
 	{
     $settings = Yii::$app->params['settings'];
 
-    if (empty($this->usrEmail) == false) {
-      ApprovalRequestModel::requestCode(
-        $this->usrEmail,
-        $this->usrID,
-        $this->usrGender,
-        $this->usrFirstName,
-        $this->usrLastName
-      );
+    if ($this->bypassRequestApprovalCode == false) {
+      if (empty($this->usrEmail) == false) {
+        ApprovalRequestModel::requestCode(
+          $this->usrEmail,
+          $this->usrID,
+          $this->usrGender,
+          $this->usrFirstName,
+          $this->usrLastName
+        );
+      }
 
-      // //generate code
-      // $code = Yii::$app->security->generateRandomString() . '_' . time();
-
-      // //save to approvals
-      // $expireTTL = $settings['AAA']['approvalRequest']['email']['expire-ttl'];
-
-      // $approvalRequestModel = new ApprovalRequestModel();
-      // $approvalRequestModel->aprUserID        = $this->usrID;
-      // $approvalRequestModel->aprKeyType       = ApprovalRequestModel::KEYTYPE_EMAIL;
-      // $approvalRequestModel->aprKey           = $this->usrEmail;
-      // $approvalRequestModel->aprCode          = $code;
-      // $approvalRequestModel->aprLastRequestAt = new Expression('NOW()');
-      // $approvalRequestModel->aprExpireAt      = new Expression("DATE_ADD(NOW(), INTERVAL {$expireTTL} SECOND)");
-      // if ($approvalRequestModel->save() == false)
-      //   throw new UnprocessableEntityHttpException("error in creating email approval request\n" . implode("\n", $approvalRequestModel->getFirstErrors()));
-
-      // //send alert 'emailApproval'
-      // $alertModel = new AlertModel();
-			// $alertModel->alrUserID  = $this->usrID;
-      // $alertModel->alrApprovalRequestID = $approvalRequestModel->aprID;
-			// $alertModel->alrTypeKey = AlertModel::TYPE_EMAIL_APPROVAL;
-			// $alertModel->alrTarget  = $this->usrEmail;
-			// $alertModel->alrInfo    = [
-      //   'gender' => $this->usrGender,
-      //   'firstName' => $this->usrFirstName,
-      //   'lastName' => $this->usrLastName,
-      //   'email' => $this->usrEmail,
-      //   'code' => $code,
-      // ];
-      // if ($alertModel->save() == false)
-      //   throw new UnprocessableEntityHttpException("error in creating mobile alert\n" . implode("\n", $alertModel->getFirstErrors()));
-    }
-
-    if (empty($this->usrMobile) == false) {
-      ApprovalRequestModel::requestCode(
-        $this->usrMobile,
-        $this->usrID,
-        $this->usrGender,
-        $this->usrFirstName,
-        $this->usrLastName
-      );
-
-      // //generate code
-      // $code = strval(rand(123456, 987654));
-
-      // //save to approvals
-      // $expireTTL = $settings['AAA']['approvalRequest']['mobile']['expire-ttl'];
-
-      // $approvalRequestModel = new ApprovalRequestModel();
-      // $approvalRequestModel->aprUserID        = $this->usrID;
-      // $approvalRequestModel->aprKeyType       = ApprovalRequestModel::KEYTYPE_MOBILE;
-      // $approvalRequestModel->aprKey           = $this->usrMobile;
-      // $approvalRequestModel->aprCode          = $code;
-      // $approvalRequestModel->aprLastRequestAt = new Expression('NOW()');
-      // $approvalRequestModel->aprExpireAt      = new Expression("DATE_ADD(NOW(), INTERVAL {$expireTTL} SECOND)");
-      // if ($approvalRequestModel->save() == false)
-      //   throw new UnprocessableEntityHttpException("error in creating mobile approval request\n" . implode("\n", $approvalRequestModel->getFirstErrors()));
-
-      // //send alert 'mobileApproval'
-      // $alertModel = new AlertModel();
-			// $alertModel->alrUserID  = $this->usrID;
-      // $alertModel->alrApprovalRequestID = $approvalRequestModel->aprID;
-			// $alertModel->alrTypeKey = AlertModel::TYPE_MOBILE_APPROVAL;
-			// $alertModel->alrTarget  = $this->usrEmail;
-			// $alertModel->alrInfo    = [
-      //   'gender' => $this->usrGender,
-      //   'firstName' => $this->usrFirstName,
-      //   'lastName' => $this->usrLastName,
-      //   'mobile' => $this->usrMobile,
-      //   'code' => $code,
-      // ];
-      // if ($alertModel->save() == false)
-      //   throw new UnprocessableEntityHttpException("error in creating mobile alert\n" . implode("\n", $alertModel->getFirstErrors()));
-    }
+      if (empty($this->usrMobile) == false) {
+        ApprovalRequestModel::requestCode(
+          $this->usrMobile,
+          $this->usrID,
+          $this->usrGender,
+          $this->usrFirstName,
+          $this->usrLastName
+        );
+      }
+    } //bypassRequestApprovalCode
   }
 
   public function getRole()
@@ -300,8 +243,10 @@ class UserModel extends ActiveRecord implements IdentityInterface
    * @param string $password password to validate
    * @return bool if password provided is valid for current user
    */
-  public function validatePassword($password, $salt)
+  public function validatePassword($password) //, $salt)
   {
-    return md5($salt . $this->usrPasswordHash) == $password;
+		return Yii::$app->security->validatePassword($password, $this->usrPasswordHash);
+    // return md5($salt . $this->usrPasswordHash) == $password;
   }
+
 }

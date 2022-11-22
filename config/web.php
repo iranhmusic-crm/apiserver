@@ -2,7 +2,6 @@
 
 $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
-$urlManager = require __DIR__ . '/urlManager.php';
 
 $config = [
 	'id' => 'basic',
@@ -10,6 +9,8 @@ $config = [
 	'bootstrap' => [
 		'log',
 		'aaa',
+		'fin',
+		'mha',
 	],
 	'aliases' => [
 		'@bower' => '@vendor/bower-asset',
@@ -18,6 +19,12 @@ $config = [
 	'modules' => [
 		'aaa' => [
 			'class' => 'app\modules\aaa\Module',
+		],
+		'fin' => [
+			'class' => 'app\modules\fin\Module',
+		],
+		'mha' => [
+			'class' => 'app\modules\mha\Module',
 		],
 	],
 	'components' => [
@@ -59,7 +66,11 @@ $config = [
 			],
 		],
 		'db' => $db,
-		'urlManager' => $urlManager,
+		'urlManager' => [
+			'enablePrettyUrl' => true,
+			'enableStrictParsing' => true,
+			'showScriptName' => false,
+		],
 		'jwt' => [
 			'class' => \app\classes\auth\Jwt::class,
 			'signer' => \bizley\jwt\Jwt::HS512,

@@ -9,6 +9,7 @@ use yii\base\Model;
 use app\classes\validators\GroupRequiredValidator;
 use app\classes\helpers\AuthHelper;
 use yii\web\UnprocessableEntityHttpException;
+use yii\web\UnauthorizedHttpException;
 
 class LoginForm extends Model
 {
@@ -18,7 +19,7 @@ class LoginForm extends Model
   public $mobile;
   public $ssid;
   public $password;
-  public $salt;
+  // public $salt;
   public $rememberMe = true;
 
 	private $_inputName = '';
@@ -50,25 +51,25 @@ class LoginForm extends Model
       ],
 
       ['password', 'required'],
-      ['password', 'validatePassword'],
+      // ['password', 'validatePassword'],
 
-      ['salt', 'required'],
+      // ['salt', 'required'],
 
       ['rememberMe', 'boolean'],
     ];
   }
 
-  public function validatePassword($attribute, $params)
-  {
-    if (!$this->hasErrors()) {
-      $user = $this->getUser();
+  // public function validatePassword($attribute, $params)
+  // {
+  //   if (!$this->hasErrors()) {
+  //     $user = $this->getUser();
 
-      if (!$user)
-        $this->addError($attribute, "Incorrect {$this->inputName} or password.");
-      else if (!$user->validatePassword($this->password, $this->salt))
-        $this->addError($attribute, "Incorrect {$this->inputName} or Password.");
-    }
-  }
+  //     if (!$user)
+  //       $this->addError($attribute, "Incorrect {$this->inputName} or password.");
+  //     else if (!$user->validatePassword($this->password)) //, $this->salt))
+  //       $this->addError($attribute, "Incorrect {$this->inputName} or Password.");
+  //   }
+  // }
 
   public function getUser()
   {
@@ -97,7 +98,7 @@ class LoginForm extends Model
   public function login()
   {
     if ($this->validate('input') == false)
-      return false;
+      throw new UnauthorizedHttpException(implode("\n", $this->getFirstErrors()));
 
     list ($normalizedInput, $type) = AuthHelper::recognizeLoginPhrase($this->input);
 
@@ -115,10 +116,28 @@ class LoginForm extends Model
 
     if ($this->validate()) {
       $user = $this->getUser();
-      return true;
-      // return Yii::$app->user->login($this->getUser(), $this->rememberMe ? 3600*24*30 : 0);
+
+      if (!$user) {
+        $this->addError('', "Incorrect {$this->inputName} or password.");
+
+        throw new UnauthorizedHttpException("could not login. \n" . implode("\n", $this->getFirstErrors()));
+      }
+
+      if ($user->validatePassword($this->password) == false) {
+        $this->addError('', "Incorrect {$this->inputName} or Password.");
+
+        throw new UnauthorizedHttpException("could not login. \n" . implode("\n", $this->getFirstErrors()));
+      }
+
+      list ($token, $mustApprove) = AuthHelper::doLogin($user);
+
+      return [
+        'token' => $token,
+        'mustApprove' => $mustApprove,
+      ];
     }
-    return false;
+
+    throw new UnauthorizedHttpException("could not login. \n" . implode("\n", $this->getFirstErrors()));
   }
 
 }

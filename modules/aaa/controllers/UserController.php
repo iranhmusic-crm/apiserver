@@ -9,15 +9,19 @@ use Yii;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\UnprocessableEntityHttpException;
-use yii\web\UnauthorizedHttpException;
 use app\classes\controller\BaseRestController;
 use app\classes\helpers\AuthHelper;
 use app\classes\helpers\PrivHelper;
 use app\modules\aaa\models\UserModel;
 use app\modules\aaa\models\SignupForm;
 use app\modules\aaa\models\LoginForm;
+use app\modules\aaa\models\LoginByMobileForm;
 use app\modules\aaa\models\ApproveCodeForm;
 use app\modules\aaa\models\ApprovalRequestModel;
+use app\modules\aaa\models\ForgotPasswordRequestModel;
+use app\modules\aaa\models\PasswordResetByForgotCodeForm;
+use app\modules\aaa\models\PasswordResetForm;
+use app\modules\aaa\models\PasswordChangeForm;
 
 class UserController extends BaseRestController
 {
@@ -34,8 +38,11 @@ class UserController extends BaseRestController
 
 		$behaviors[BaseRestController::BEHAVIOR_AUTHENTICATOR]['except'] = [
 			'login',
-			'resend-approval-code',
+			'login-by-mobile',
+			'request-approval-code',
 			'accept-approval',
+			'request-forgot-password',
+			'password-reset-by-forgot-code',
 		];
 
 		// $behaviors['verbs'] = [
@@ -62,13 +69,13 @@ class UserController extends BaseRestController
 		if (($model = UserModel::findOne($id)) !== null)
 			return $model;
 
-		throw new NotFoundHttpException('The requested page item not exist.');
+		throw new NotFoundHttpException('The requested item not exist.');
 	}
 
 	public function actionIndex()
 	{
 		$filter = [];
-		if (PrivHelper::hasPriv('user/crud', '0100') == false)
+		if (PrivHelper::hasPriv('aaa/user/crud', '0100') == false)
 			$filter = ['usrID' => Yii::$app->user->identity->usrID];
 
 		$query = UserModel::find();
@@ -80,7 +87,7 @@ class UserController extends BaseRestController
 
 	public function actionView($id)
 	{
-		if (PrivHelper::hasPriv('user/crud', '0100') == false) {
+		if (PrivHelper::hasPriv('aaa/user/crud', '0100') == false) {
 			if (Yii::$app->user->identity->usrID != $id)
 				throw new ForbiddenHttpException('access denied');
 		}
@@ -90,7 +97,7 @@ class UserController extends BaseRestController
 
 	public function actionCreate()
 	{
-		PrivHelper::checkPriv('user/crud', '1000');
+		PrivHelper::checkPriv('aaa/user/crud', '1000');
 
 		$model = new UserModel();
 
@@ -110,7 +117,7 @@ class UserController extends BaseRestController
 
 	public function actionUpdate($id)
 	{
-		if (PrivHelper::hasPriv('user/crud', '0010') == false) {
+		if (PrivHelper::hasPriv('aaa/user/crud', '0010') == false) {
 			if (Yii::$app->user->identity->usrID != $id)
 				throw new ForbiddenHttpException('access denied');
 		}
@@ -132,7 +139,7 @@ class UserController extends BaseRestController
 
 	public function actionDelete($id)
 	{
-		if (PrivHelper::hasPriv('user/crud', '0001') == false) {
+		if (PrivHelper::hasPriv('aaa/user/crud', '0001') == false) {
 			if (Yii::$app->user->identity->usrID != $id)
 				throw new ForbiddenHttpException('access denied');
 		}
@@ -181,10 +188,11 @@ class UserController extends BaseRestController
 
 		//login
 		//-----------------------
-		$token = AuthHelper::doLogin($model->user);
+		list ($token, $mustApprove) = AuthHelper::doLogin($model->user);
 
 		return [
 			'token' => $token,
+			'mustApprove' => $mustApprove,
 		];
 	}
 
@@ -195,15 +203,11 @@ class UserController extends BaseRestController
 		if ($model->load(Yii::$app->request->getBodyParams(), '') == false)
 			throw new NotFoundHttpException("Username and Password not provided");
 
-		if ($model->login() == false)
-			throw new UnauthorizedHttpException(implode("\n", $model->getFirstErrors()));
-
-		//login
-		//-----------------------
-		$token = AuthHelper::doLogin($model->user);
+		list ($token, $mustApprove) = $model->login();
 
 		return [
 			'token' => $token,
+			'mustApprove' => $mustApprove,
 		];
 	}
 
@@ -216,26 +220,25 @@ class UserController extends BaseRestController
 		];
 	}
 
-	public function actionResendApprovalCode()
+	/**
+	 * input
+	 */
+	public function actionRequestApprovalCode()
 	{
 		$bodyParams = Yii::$app->request->getBodyParams();
 
 		if (empty($bodyParams['input']))
 			throw new NotFoundHttpException("parameters not provided");
 
-		ApprovalRequestModel::requestCode($bodyParams['input']);
-
 		return [
-			'result' => true,
+			'result' => ApprovalRequestModel::requestCode($bodyParams['input']),
 		];
 	}
 
-	public function actionRequestEmailApproval()
-	{
-		// Yii::$app->user->identity->usrID
-
-	}
-
+	/**
+	 * input
+	 * code
+	 */
 	public function actionAcceptApproval()
 	{
 		$model = new ApproveCodeForm();
@@ -251,15 +254,93 @@ class UserController extends BaseRestController
 		];
 	}
 
+	/**
+	 * input
+	 */
 	public function actionRequestForgotPassword()
 	{
-		// Yii::$app->user->identity->usrID
+		$bodyParams = Yii::$app->request->getBodyParams();
 
+		if (empty($bodyParams['input']))
+			throw new NotFoundHttpException("parameters not provided");
+
+		return [
+			'result' => ForgotPasswordRequestModel::requestCode($bodyParams['input']),
+		];
 	}
 
-	public function actionChangePassword()
+	/**
+	 * input
+	 * code
+	 * newPassword
+	 */
+	public function actionPasswordResetByForgotCode()
 	{
+		$model = new PasswordResetByForgotCodeForm();
 
+		if ($model->load(Yii::$app->request->getBodyParams(), '') == false)
+			throw new NotFoundHttpException("parameters not provided");
+
+		if ($model->save() == false)
+			throw new UnprocessableEntityHttpException(implode("\n", $model->getFirstErrors()));
+
+		return [
+			'result' => true,
+		];
+	}
+
+	/**
+	 * userID
+	 * newPassword
+	 */
+	public function actionPasswordReset()
+	{
+		PrivHelper::checkPriv('aaa/user/passwordReset');
+
+		$model = new PasswordResetForm();
+
+		if ($model->load(Yii::$app->request->getBodyParams(), '') == false)
+			throw new NotFoundHttpException("parameters not provided");
+
+		if ($model->save() == false)
+			throw new UnprocessableEntityHttpException(implode("\n", $model->getFirstErrors()));
+
+		return [
+			'result' => true,
+		];
+	}
+
+	/**
+	 * oldPassword
+	 * newPassword
+	 */
+	public function actionPasswordChange()
+	{
+		$model = new PasswordChangeForm();
+
+		if ($model->load(Yii::$app->request->getBodyParams(), '') == false)
+			throw new NotFoundHttpException("parameters not provided");
+
+		if ($model->save() == false)
+			throw new UnprocessableEntityHttpException(implode("\n", $model->getFirstErrors()));
+
+		return [
+			'result' => true,
+		];
+	}
+
+	/**
+	 * mobile
+	 * code ?
+	 */
+	public function actionLoginByMobile()
+	{
+		$model = new LoginByMobileForm();
+
+		if ($model->load(Yii::$app->request->getBodyParams(), '') == false)
+			throw new NotFoundHttpException("Username and Password not provided");
+
+		return $model->process();
 	}
 
 }

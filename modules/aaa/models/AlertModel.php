@@ -16,11 +16,6 @@ class AlertModel extends ActiveRecord
   const STATUS_ERROR 			= 'E';
   const STATUS_REMOVED 		= 'R';
 
-	const TYPE_EMAIL_APPROVAL 	= 'emailApproval';
-	const TYPE_MOBILE_APPROVAL 	= 'mobileApproval';
-	const TYPE_EMAIL_APPROVED 	= 'emailApproved';
-	const TYPE_MOBILE_APPROVED 	= 'mobileApproved';
-
 	public static function tableName()
 	{
 		return '{{%AAA_Alert}}';
@@ -31,7 +26,9 @@ class AlertModel extends ActiveRecord
     return [
       ['alrID', 'integer'],
 			['alrUserID', 'integer'],
+
 			['alrApprovalRequestID', 'integer'],
+			['alrForgotPasswordRequestID', 'integer'],
 
 			['alrTypeKey', 'string', 'max' => 64],
 			['alrTypeKey', 'required'],

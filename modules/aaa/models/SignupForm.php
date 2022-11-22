@@ -24,7 +24,7 @@ class SignupForm extends Model
       ['input', 'string'],
       ['input', 'required'],
 
-			['password', 'string'],
+			['password', 'string', 'min' => 4],
       ['password', 'required'],
     ];
   }
@@ -47,7 +47,7 @@ class SignupForm extends Model
 		} else
 				throw new UnprocessableEntityHttpException('Invalid input');
 
-		$model->usrPasswordHash = $this->password;
+		$model->usrPassword = $this->password;
 
 		if ($this->validate()) {
 			if ($model->save() == false)
