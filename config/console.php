@@ -2,38 +2,39 @@
 
 $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
+$modules = require __DIR__ . '/modules.php';
 
 $config = [
-	'id' => 'basic-console',
+	'id' => 'apiserver',
 	'basePath' => dirname(__DIR__),
-	'bootstrap' => [
+	'bootstrap' => array_merge([
 		'log',
-		'aaa',
-		'fin',
-		'mha',
-	],
+	], $modules['bootstrap']),
 	'controllerNamespace' => 'app\commands',
 	'aliases' => [
 		'@bower' => '@vendor/bower-asset',
 		'@npm'   => '@vendor/npm-asset',
 		'@tests' => '@app/tests',
 	],
-	'modules' => [
-		'aaa' => [
-			'class' => 'app\modules\aaa\Module',
-		],
-		'fin' => [
-			'class' => 'app\modules\fin\Module',
-		],
-		'mha' => [
-			'class' => 'app\modules\mha\Module',
-		],
-	],
+	'modules' => $modules['modules'],
 	'components' => [
 		'cache' => [
 			'class' => 'yii\caching\FileCache',
 		],
+		'fileManager' => [
+			'class' => \shopack\aaa\backend\components\FileManager::class,
+		],
+		'mailer' => [
+			'class' => \yii\symfonymailer\Mailer::class,
+			'viewPath' => '@app/mail',
+			// send all mails to a file by default.
+			'useFileTransport' => true,
+		],
+		'sms' => [
+			'class' => \shopack\aaa\backend\components\Sms::class,
+		],
 		'log' => [
+			'traceLevel' => YII_DEBUG ? 999 : 0,
 			'targets' => [
 				[
 					'class' => 'yii\log\FileTarget',
@@ -42,6 +43,9 @@ $config = [
 			],
 		],
 		'db' => $db,
+		'i18n' => [
+			'class' => \shopack\base\common\components\I18N::class,
+		],
 	],
 	'params' => $params,
 	'controllerMap' => [
@@ -56,23 +60,42 @@ $config = [
 			'migrationPath' => [
 				// '@yii/rbac/migrations',
 				// '@yii/web/migrations',
-				'@app/migrations',
-				'@app/modules/aaa/migrations',
-				'@app/modules/fin/migrations',
-				'@app/modules/mha/migrations',
+				// '@app/migrations',
+				'@aaa/migrations',
+				'@mha/migrations',
+				// '@app/modules/mha/migrations',
 				// '@yii/../yii2-queue/src/drivers/db/migrations',
 			],
 		],
+		'migrate-aaa' => [
+			'class' => 'yii\console\controllers\MigrateController',
+			'migrationPath' => '@aaa/migrations',
+		],
+		'migrate-mha' => [
+			'class' => 'yii\console\controllers\MigrateController',
+			'migrationPath' => '@mha/migrations',
+		],
+
 		//'migrationPath' => null, // allows to disable not namespaced migration completely
 	],
 ];
 
 if (YII_ENV_DEV) {
 	// configuration adjustments for 'dev' environment
+
+	$config['bootstrap'][] = 'debug';
+	$config['modules']['debug'] = [
+		'class' => 'yii\debug\Module',
+		// uncomment the following to add your IP if you are not connecting from localhost.
+		'allowedIPs' => ['*'],
+	];
+
+	/*
 	$config['bootstrap'][] = 'gii';
 	$config['modules']['gii'] = [
 		'class' => 'yii\gii\Module',
 	];
+	*/
 }
 
 return $config;

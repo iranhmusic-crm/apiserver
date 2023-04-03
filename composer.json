@@ -19,8 +19,17 @@
         "yiisoft/yii2-bootstrap5": "~2.0.2",
         "yiisoft/yii2-symfonymailer": "~2.0.3",
         "bizley/jwt": "^3.0",
+        "ramsey/uuid": "^4.7",
         "linslin/yii2-curl": "*",
-        "giggsey/libphonenumber-for-php": "^8.13"
+        "creocoder/yii2-nested-sets": ">=0.9",
+        "giggsey/libphonenumber-for-php": "^8.13",
+        "shopack/yii2-base-common": "@dev",
+        "shopack/yii2-base-backend": "@dev",
+        "shopack/yii2-module-aaa-common": "@dev",
+        "shopack/yii2-module-aaa-backend": "@dev",
+        "iranhmusic/shopack-module-mha-common": "@dev",
+        "iranhmusic/shopack-module-mha-backend": "@dev",
+        "sam-it/yii2-mariadb": "^3.1"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",

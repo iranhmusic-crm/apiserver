@@ -16,6 +16,13 @@ require __DIR__ . '/vendor/yiisoft/yii2/Yii.php';
 
 $config = require __DIR__ . '/config/console.php';
 
-$application = new yii\console\Application($config);
+$profile = YII_DEBUG;
+$profile and Yii::beginProfile('run');
+
+// $application = new yii\console\Application($config);
+$application = new \shopack\base\common\console\Application($config);
 $exitCode = $application->run();
+
+$profile and Yii::endProfile('run');
+
 exit($exitCode);

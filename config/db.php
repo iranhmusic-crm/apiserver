@@ -2,6 +2,11 @@
 
 return [
 	'class' => 'yii\db\Connection',
+
+	// 'schemaMap' => [
+	// 	'mysql' => SamIT\Yii2\MariaDb\Schema::class
+	// ],
+
 	'dsn' => 'mysql:host=localhost;port=3306;dbname=dbiranhmusic_yii',
 	'username' => 'root',
 	'password' => '111',
