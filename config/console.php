@@ -1,8 +1,18 @@
 <?php
 
-$params = require __DIR__ . '/params.php';
-$db = require __DIR__ . '/db.php';
-$modules = require __DIR__ . '/modules.php';
+$params = array_replace_recursive(
+	require(__DIR__ . '/params.php'),
+	require(__DIR__ . '/params-local.php')
+);
+$db = array_replace_recursive(
+	require(__DIR__ . '/db.php'),
+	require(__DIR__ . '/db-local.php')
+);
+$modules = array_replace_recursive(
+	require(__DIR__ . '/modules.php'),
+	require(__DIR__ . '/modules-local.php')
+);
+$configLocal = require(__DIR__ . '/console-local.php');
 
 $config = [
 	'id' => 'apiserver',
@@ -27,11 +37,10 @@ $config = [
 		'mailer' => [
 			'class' => \yii\symfonymailer\Mailer::class,
 			'viewPath' => '@app/mail',
-			// send all mails to a file by default.
-			'useFileTransport' => true,
+			'useFileTransport' => false,
 		],
-		'sms' => [
-			'class' => \shopack\aaa\backend\components\Sms::class,
+		'alertManager' => [
+			'class' => \shopack\aaa\backend\components\AlertManager::class,
 		],
 		'log' => [
 			'traceLevel' => YII_DEBUG ? 999 : 0,
@@ -81,21 +90,12 @@ $config = [
 ];
 
 if (YII_ENV_DEV) {
-	// configuration adjustments for 'dev' environment
-
 	$config['bootstrap'][] = 'debug';
 	$config['modules']['debug'] = [
 		'class' => 'yii\debug\Module',
 		// uncomment the following to add your IP if you are not connecting from localhost.
 		'allowedIPs' => ['*'],
 	];
-
-	/*
-	$config['bootstrap'][] = 'gii';
-	$config['modules']['gii'] = [
-		'class' => 'yii\gii\Module',
-	];
-	*/
 }
 
-return $config;
+return array_replace_recursive($config, $configLocal);

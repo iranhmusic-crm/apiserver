@@ -7,18 +7,13 @@ return [
 	// 	'mysql' => SamIT\Yii2\MariaDb\Schema::class
 	// ],
 
-	'dsn' => 'mysql:host=localhost;port=3306;dbname=dbiranhmusic_yii',
-	'username' => 'root',
-	'password' => '111',
+	'dsn' => 'mysql:host=localhost;port=3306;dbname=db',
+	'username' => 'must be define in local file',
+	'password' => 'must be define in local file',
 
-	'enableSchemaCache' => YII_ENV_PROD,
-	'schemaCacheDuration' => 60, //3600; //seconds
+	'enableSchemaCache' => true,
+	'schemaCacheDuration' => 3600, //seconds
 	'schemaCache' => 'cache',
 	'charset' => 'utf8mb4',
 	'tablePrefix' => 'tbl_',
-
-	// Schema cache options (for production environment)
-	//'enableSchemaCache' => true,
-	//'schemaCacheDuration' => 60,
-	//'schemaCache' => 'cache',
 ];

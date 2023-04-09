@@ -1,8 +1,18 @@
 <?php
 
-$params = require __DIR__ . '/params.php';
-$db = require __DIR__ . '/db.php';
-$modules = require __DIR__ . '/modules.php';
+$params = array_replace_recursive(
+	require(__DIR__ . '/params.php'),
+	require(__DIR__ . '/params-local.php')
+);
+$db = array_replace_recursive(
+	require(__DIR__ . '/db.php'),
+	require(__DIR__ . '/db-local.php')
+);
+$modules = array_replace_recursive(
+	require(__DIR__ . '/modules.php'),
+	require(__DIR__ . '/modules-local.php')
+);
+$webLocal = require(__DIR__ . '/web-local.php');
 
 use \yii\web\Request;
 $baseUrl = str_replace('/web', '', (new Request)->getBaseUrl());
@@ -24,7 +34,7 @@ $config = [
 		'request' => [
 			'class' => \shopack\base\common\web\Request::class,
 			// !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
-			'cookieValidationKey' => 'Fsr4FMUPthoCEWKtAV7Jo0BLiXoiP3Dn',
+			'cookieValidationKey' => 'must be define in local file',
 			'parsers' => [
 				'application/json' => 'yii\web\JsonParser',
 			],
@@ -51,8 +61,10 @@ $config = [
 		'mailer' => [
 			'class' => \yii\symfonymailer\Mailer::class,
 			'viewPath' => '@app/mail',
-			// send all mails to a file by default.
-			'useFileTransport' => true,
+			'useFileTransport' => false,
+		],
+		'alertManager' => [
+			'class' => \shopack\aaa\backend\components\AlertManager::class,
 		],
 		'log' => [
 			'traceLevel' => YII_DEBUG ? 999 : 0,
@@ -77,7 +89,7 @@ $config = [
 		'jwt' => [
 			'class' => \shopack\base\backend\auth\Jwt::class,
 			'signer' => \bizley\jwt\Jwt::HS512,
-			'signingKey' => 'fDcXlBvkO9ND9UvhszmW4elXl2EehtpM',
+			'signingKey' => 'must be define in local file',
 			// 'ttl' => 24 * 3600, //24 hours
 		],
 	],
@@ -85,23 +97,12 @@ $config = [
 ];
 
 if (YII_ENV_DEV) {
-	// configuration adjustments for 'dev' environment
-
 	$config['bootstrap'][] = 'debug';
 	$config['modules']['debug'] = [
 		'class' => 'yii\debug\Module',
 		// uncomment the following to add your IP if you are not connecting from localhost.
 		'allowedIPs' => ['*'],
 	];
-
-	/*
-	$config['bootstrap'][] = 'gii';
-	$config['modules']['gii'] = [
-		'class' => 'yii\gii\Module',
-		// uncomment the following to add your IP if you are not connecting from localhost.
-		//'allowedIPs' => ['127.0.0.1', '::1'],
-	];
-	*/
 }
 
-return $config;
+return array_replace_recursive($config, $webLocal);

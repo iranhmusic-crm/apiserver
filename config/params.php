@@ -1,9 +1,9 @@
 <?php
 
 return [
-  'adminEmail' => 'admin@example.com',
-  'senderEmail' => 'noreply@example.com',
-  'senderName' => 'Example.com mailer',
+  'adminEmail'  => 'must be define in local file',
+  'senderEmail' => 'must be define in local file',
+  'senderName'  => 'must be define in local file',
 
   'settings' => [
     'AAA' => [
@@ -32,7 +32,7 @@ return [
       //   'min-length' => 3,
       // ],
       'jwt' => [
-        'ttl' => 365 * 24 * 3600, //5 * 60, //5 minutes
+        'ttl' => 5 * 60, //5 minutes
       ],
     ],
   ],
