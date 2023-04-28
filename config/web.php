@@ -58,6 +58,9 @@ $config = [
 		'fileManager' => [
 			'class' => \shopack\aaa\backend\components\FileManager::class,
 		],
+		'paymentManager' => [
+			'class' => \shopack\aaa\backend\components\PaymentManager::class,
+		],
 		'mailer' => [
 			'class' => \yii\symfonymailer\Mailer::class,
 			'viewPath' => '@app/mail',
@@ -76,6 +79,9 @@ $config = [
 			],
 		],
 		'db' => $db,
+		'formatter' => [
+			'class' => \shopack\base\common\components\Formatter::class,
+		],
 		'i18n' => [
 			'class' => \shopack\base\common\components\I18N::class,
 		],
