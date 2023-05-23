@@ -31,7 +31,8 @@
         "iranhmusic/shopack-module-mha-backend": "@dev",
         "sam-it/yii2-mariadb": "^3.1",
         "aws/aws-sdk-php": "^3.262",
-        "ippanel/php-rest-sdk": "^2.0"
+        "ippanel/php-rest-sdk": "^2.0",
+        "farapayamak/php": "^1.0"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",

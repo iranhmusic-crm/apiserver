@@ -15,6 +15,7 @@ $modules = array_replace_recursive(
 $configLocal = require(__DIR__ . '/console-local.php');
 
 $config = [
+	'isJustForMe' => false,
 	'id' => 'apiserver',
 	'basePath' => dirname(__DIR__),
 	'bootstrap' => array_merge([
@@ -39,8 +40,8 @@ $config = [
 			'viewPath' => '@app/mail',
 			'useFileTransport' => false,
 		],
-		'alertManager' => [
-			'class' => \shopack\aaa\backend\components\AlertManager::class,
+		'messageManager' => [
+			'class' => \shopack\aaa\backend\components\MessageManager::class,
 		],
 		'log' => [
 			'traceLevel' => YII_DEBUG ? 999 : 0,

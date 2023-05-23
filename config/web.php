@@ -1,12 +1,12 @@
 <?php
 
-$params = array_replace_recursive(
-	require(__DIR__ . '/params.php'),
-	require(__DIR__ . '/params-local.php')
-);
 $db = array_replace_recursive(
 	require(__DIR__ . '/db.php'),
 	require(__DIR__ . '/db-local.php')
+);
+$params = array_replace_recursive(
+	require(__DIR__ . '/params.php'),
+	require(__DIR__ . '/params-local.php')
 );
 $modules = array_replace_recursive(
 	require(__DIR__ . '/modules.php'),
@@ -19,6 +19,7 @@ $baseUrl = str_replace('/web', '', (new Request)->getBaseUrl());
 $baseUrl = rtrim($baseUrl, '/') . '/';
 
 $config = [
+	'isJustForMe' => false,
 	'id' => 'apiserver',
 	'basePath' => dirname(__DIR__),
 	'homeUrl' => $baseUrl,
@@ -66,8 +67,8 @@ $config = [
 			'viewPath' => '@app/mail',
 			'useFileTransport' => false,
 		],
-		'alertManager' => [
-			'class' => \shopack\aaa\backend\components\AlertManager::class,
+		'messageManager' => [
+			'class' => \shopack\aaa\backend\components\MessageManager::class,
 		],
 		'log' => [
 			'traceLevel' => YII_DEBUG ? 999 : 0,
